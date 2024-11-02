@@ -3,6 +3,8 @@
 
 # gridsearch
 
+# pkgdown <img src="sticker/gridsearch.png" align="right" alt="" width="120" />
+
 <!-- badges: start -->
 <!-- badges: end -->
 
