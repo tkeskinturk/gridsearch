@@ -1,9 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-# gridsearch
-
-# pkgdown <img src="sticker/gridsearch.png" align="right" alt="" width="120" />
+# gridsearch <img src="sticker/gridsearch.png" align="right" alt="" width="120" />
 
 <!-- badges: start -->
 <!-- badges: end -->
