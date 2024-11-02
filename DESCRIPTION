@@ -1,0 +1,31 @@
+Package: gridsearch
+Title: Performs Grid Search for Individual Change in Panel Data
+Version: 0.1.0
+Authors@R: c(
+    person("Turgut", "Keskintürk", , "turgut.keskinturk@duke.edu", role = c("aut", "cre")),
+    person("Stephen", "Vaisey", , "stephen.vaisey@duke.edu", role = c("aut")))
+Description: Provides convenience functions to perform fake-data simulations using panel data to assess the plausibility of competing data generation processes for panel change.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+    data.table,
+    dplyr,
+    fastglm,
+    furrr,
+    future,
+    ggh4x,
+    ggplot2,
+    hrbrthemes,
+    janitor,
+    purrr,
+    rlang,
+    scales,
+    tibble,
+    tidyr
+Suggests: 
+    testthat (>= 3.0.0)
+BugReports: https://github.com/tkeskinturk/gridsearch/issues
+Config/testthat/edition: 3
+URL: https://tkeskinturk.github.io/gridsearch/
