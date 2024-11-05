@@ -10,7 +10,6 @@ gridPlot(
   qcut1 = 0.05,
   qcut2 = 0.1,
   qcut3 = 0.2,
-  pid_n = NULL,
   ncut1 = 0.05,
   ncut2 = 0.1,
   ncut3 = 0.2
@@ -26,8 +25,6 @@ gridPlot(
 \item{qcut2}{Cut 2 for the quantile method.}
 
 \item{qcut3}{Cut 3 for the quantile method.}
-
-\item{pid_n}{The number of unique individuals in the original dataframe.}
 
 \item{ncut1}{Cut 1 for the normalized method.}
 

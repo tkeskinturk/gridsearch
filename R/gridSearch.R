@@ -54,7 +54,9 @@ gridSearch <-
     # reliability
     reliability = 0.9,
     # seed
-    seed = 11235
+    seed = 11235,
+    # the number of workers
+    workers = 8
 
   ) {
 
@@ -96,7 +98,7 @@ gridSearch <-
     # --- part 1: initialize
 
     ## session
-    future::plan(future::multisession)
+    future::plan(future::multisession, workers = workers)
     set.seed(seed)
     pattern = match.arg(pattern)
 

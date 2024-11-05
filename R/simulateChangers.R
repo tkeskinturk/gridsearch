@@ -48,7 +48,7 @@ simulateChangers <-
     ## reliability for latent scores
     reliable = 0.8,
     ## the number of simulations and set seed
-    nrep = 1000, seed = 11235
+    nrep = 1000, seed = 11235, workers = 8
 
   ) {
 
@@ -60,7 +60,7 @@ simulateChangers <-
     if (strength < 0) stop("Error: Change strength can't be negative (remember: it's 'strength')")
     if (reliable < 0) stop("Error: Reliability can't be negative. Try again.")
 
-    future::plan(future::multisession)
+    future::plan(future::multisession, workers = workers)
     set.seed(seed)
 
     # ----------------------------------------------------- #

@@ -14,7 +14,8 @@ gridSearch(
   step2 = 120,
   step3 = 480,
   reliability = 0.9,
-  seed = 11235
+  seed = 11235,
+  workers = 8
 )
 }
 \arguments{

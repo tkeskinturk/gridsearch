@@ -13,7 +13,8 @@ simulateChangers(
   strength = 1,
   reliable = 0.8,
   nrep = 1000,
-  seed = 11235
+  seed = 11235,
+  workers = 8
 )
 }
 \arguments{
