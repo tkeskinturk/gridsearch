@@ -52,27 +52,13 @@ simulateChangers <-
 
   ) {
 
-    if(n <= 0)
-      return(stop(
-        "Error: We need at least some people. Check your `n` call."))
-    if(t <= 1)
-      return(stop(
-        "Error: We need at least 2 time periods to generate panel data. Try again."))
-    if(rate < 0)
-      return(stop(
-        "Error: Rate of change must range between 0 and 1."))
-    if(balance_dir <  0 | balance_dir >  1)
-      return(stop(
-        "Error: Directionality balance must be a number between 0 and 1."))
-    if(balance_res <= 0 | balance_res >= 1)
-      return(stop(
-        "Error: Outcome balance must be between 0 and 1 (not inclusive)."))
-    if(strength < 0)
-      return(stop(
-        "Error: Change strength can't be negative (remember: it's 'strength')"))
-    if(reliable < 0)
-      return(stop(
-        "Error: Reliability can't be negative. Try again."))
+    if (n <= 0) stop("Error: We need at least some people. Check your `n` call.")
+    if (t <= 1) stop("Error: We need at least 2 time periods to generate panel data. Try again.")
+    if (rate < 0) stop("Error: Rate of change must range between 0 and 1.")
+    if (balance_dir <  0 | balance_dir >  1) stop("Error: Directionality balance must be a number between 0 and 1.")
+    if (balance_res <= 0 | balance_res >= 1) stop("Error: Outcome balance must be between 0 and 1 (not inclusive).")
+    if (strength < 0) stop("Error: Change strength can't be negative (remember: it's 'strength')")
+    if (reliable < 0) stop("Error: Reliability can't be negative. Try again.")
 
     future::plan(future::multisession)
     set.seed(seed)
@@ -101,7 +87,7 @@ simulateChangers <-
         data =
           furrr::future_pmap(
             ## mapping list
-            .l = list(p_n, p_t, p_strength, p_rate, p_dir, p_res, p_rel),
+            .l = list(.data$p_n, .data$p_t, .data$p_strength, .data$p_rate, .data$p_dir, .data$p_res, .data$p_rel),
             ## refer to list based on index
             .f = purrr::possibly(
               ~ gridsearch::buildDGP(
@@ -134,32 +120,31 @@ simulateChangers <-
       # step 1: classify
       dplyr::mutate(
         correspondence = purrr::map2(
-          .x = data,
-          .y = slopes,
+          .x = .data$data,
+          .y = .data$slopes,
           .f =
             ~ dplyr::left_join(.x |>
-                                 dplyr::distinct(pid, changer), .y, by = "pid") |>
+                                 dplyr::distinct(.data$pid, .data$changer), .y, by = "pid") |>
             dplyr::mutate(
               predicted =
                 dplyr::case_when(
-                  (estimate > 0) == TRUE
-                  &
-                    (abs(estimate - 0) >= abs(estimate - strength)) == TRUE ~
+                  (.data$estimate > 0) &
+                    (abs(.data$estimate - 0) >= abs(.data$estimate - .data$strength)) ~
                     1,
-                  (estimate < 0) == TRUE
+                  (.data$estimate < 0)
                   &
-                    (abs(estimate - 0) >= abs(estimate + strength)) == TRUE  ~
+                    (abs(.data$estimate - 0) >= abs(.data$estimate + .data$strength)) == TRUE  ~
                     1,
-                  TRUE ~ 0
+                  .default = 0
                 )
             ) |>
-            dplyr::select(pid, changer, predicted)
+            dplyr::select("pid", "changer", "predicted")
         )
       ) |>
 
       # step 2: confuse
       dplyr::mutate(confusion = purrr::map(
-        .x = correspondence,
+        .x = .data$correspondence,
         .f = ~  tibble::tibble(changer =
                                  c(0, 0, 1, 1),
                                predicted =
@@ -169,13 +154,13 @@ simulateChangers <-
               dplyr::count(changer, predicted),
             by = c("changer", "predicted")
           ) |>
-          dplyr::mutate(n = ifelse(is.na(n) == TRUE, 0, n))
+          dplyr::mutate(n = ifelse(is.na(.data$n), 0, .data$n))
       )) |>
 
       # step 3: organize
       dplyr::mutate(confused =
-                      purrr::map(.x = confusion, .f = ~ confusionMatrix(.))) |>
-      dplyr::select(sims, confused) |> tidyr::unnest_wider(confused)
+                      purrr::map(.x = .data$confusion, .f = ~ confusionMatrix(.))) |>
+      dplyr::select("sims", "confused") |> tidyr::unnest_wider(.data$confused)
 
     return(data)
 

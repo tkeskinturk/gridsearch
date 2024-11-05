@@ -50,7 +50,7 @@ varyingSlopes <-
 
     ## get unique model matrix
     X = stats::model.matrix( ~ t, data = df |>
-                               dplyr::filter(pid == 1) |> dplyr::distinct(pid, t))
+                               dplyr::filter(.data$pid == 1) |> dplyr::distinct(.data$pid, .data$t))
 
     ## function for probs
     bounded_change <- function(d) {
@@ -67,10 +67,10 @@ varyingSlopes <-
     # extract coefficient per pid
     estimates_coef <-
       suppressWarnings(
-        data.table::as.data.table(df)[, estimate := bounded_change(.SD), by = pid]
+        data.table::as.data.table(df)[, "estimate" := bounded_change(.SD), by = "pid"]
         ) |>
       tibble::as_tibble() |>
-      dplyr::distinct(pid, estimate)
+      dplyr::distinct(.data$pid, .data$estimate)
 
     return(estimates_coef)
 

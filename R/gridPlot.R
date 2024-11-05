@@ -38,17 +38,16 @@ gridPlot <-
            ncut3 = 0.20) {
 
     method = match.arg(method)
+    lvls <- paste("Group", 1:4)
 
     if (data |>
         dplyr::select(dplyr::any_of(c("rate", "strength", "direction", "error", "pattern"))) |>
         ncol() != 5
     )
-      return(stop(
-        "Error: One or more columns from `gridSearch` is missing."))
+      stop("Error: One or more columns from `gridSearch` is missing.")
 
     if (method == "normalized" & is.null(pid_n) == TRUE)
-      return(stop(
-        "Error: When using method `normalized`, you need to supply the number of unique PIDs"))
+      stop("Error: When using method `normalized`, you need to supply the number of unique PIDs")
 
     ## organize data
 
@@ -57,20 +56,16 @@ gridPlot <-
       data <- data |>
         dplyr::mutate(
           group = dplyr::case_when(
-            error <= stats::quantile(error, qcut1, na.rm = TRUE) ~
+            error <= stats::quantile(.data$error, qcut1, na.rm = TRUE) ~
               "Group 1",
-            error <= stats::quantile(error, qcut2, na.rm = TRUE) ~
+            error <= stats::quantile(.data$error, qcut2, na.rm = TRUE) ~
               "Group 2",
-            error <= stats::quantile(error, qcut3, na.rm = TRUE) ~
+            error <= stats::quantile(.data$error, qcut3, na.rm = TRUE) ~
               "Group 3",
             TRUE ~ "Group 4"
           )
         ) |>
-        dplyr::mutate(group = factor(group,
-                                     levels = c("Group 1",
-                                                "Group 2",
-                                                "Group 3",
-                                                "Group 4")))
+        dplyr::mutate(group = factor(.data$group, levels = lvls))
 
     }
 
@@ -78,22 +73,16 @@ gridPlot <-
 
       if (unique(data$pattern) == "contingency") {
         data <- data |>
-          dplyr::mutate(error = error / pid_n) |>
+          dplyr::mutate(error = .data$error / pid_n) |>
           dplyr::mutate(
             group = dplyr::case_when(
-              error <= ncut1 ~
-                "Group 1",
-              error <= ncut2 ~
-                "Group 2",
-              error <= ncut3 ~
-                "Group 3",
-              TRUE ~ "Group 4"
+              .data$error <= ncut1 ~ "Group 1",
+              .data$error <= ncut2 ~ "Group 2",
+              .data$error <= ncut3 ~ "Group 3",
+              .default = "Group 4"
             )
           ) |>
-          dplyr::mutate(group = factor(group, levels = c("Group 1",
-                                                         "Group 2",
-                                                         "Group 3",
-                                                         "Group 4")))
+          dplyr::mutate(group = factor(.data$group, levels = lvls))
 
       }
 
@@ -101,19 +90,13 @@ gridPlot <-
         data <- data |>
           dplyr::mutate(
             group = dplyr::case_when(
-              error <= ncut1 ~
-                "Group 1",
-              error <= ncut2 ~
-                "Group 2",
-              error <= ncut3 ~
-                "Group 3",
-              TRUE ~ "Group 4"
+              .data$error <= ncut1 ~ "Group 1",
+              .data$error <= ncut2 ~ "Group 2",
+              .data$error <= ncut3 ~ "Group 3",
+              .default = "Group 4"
             )
           ) |>
-          dplyr::mutate(group = factor(group, levels = c("Group 1",
-                                                         "Group 2",
-                                                         "Group 3",
-                                                         "Group 4")))
+          dplyr::mutate(group = factor(.data$group, levels = lvls))
 
       }
 
@@ -129,19 +112,17 @@ gridPlot <-
 
     ## plot
     plot <- data |>
-      ggplot2::ggplot(ggplot2::aes(x = rate, y = strength)) +
+      ggplot2::ggplot(ggplot2::aes(x = .data$rate, y = .data$strength)) +
       ggplot2::scale_x_continuous(limits = c(0, 1),
                                   labels = scales::label_percent()) +
       ggplot2::scale_y_continuous(limits = c(0, 2),
                                   labels = scales::pretty_breaks()) +
       ggplot2::labs(x = "Rate of Change", y = "Strength of Change") +
       hrbrthemes::theme_ipsum_rc(grid = "XY") +
-      ggplot2::geom_point(ggplot2::aes(color = group), size = 2) +
-      ggplot2::scale_color_manual(values = c("#000000",
-                                             "#bbbbbb",
-                                             "#eeeeee",
-                                             "transparent"),
-                                  drop = FALSE) +
+      ggplot2::geom_point(ggplot2::aes(color = .data$group), size = 2) +
+      ggplot2::scale_color_manual(
+        values = c("#000000", "#bbbbbb", "#eeeeee", "transparent"), drop = FALSE
+        ) +
       ggplot2::theme(legend.position = "none")
 
     ## design
