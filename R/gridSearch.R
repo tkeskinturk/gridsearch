@@ -63,46 +63,30 @@ gridSearch <-
     df <- data |>
       dplyr::select(
         # get person identifier
-        pid = {
-          {
-            pname
-          }
-        },
+        pid = dplyr::all_of(pname),
         # get time identifier
-        t = {
-          {
-            tname
-          }
-        },
+        t = dplyr::all_of(tname),
         # get outcome identifier
-        y  = {
-          {
-            yname
-          }
-        }) |>
-      dplyr::mutate(t = scales::rescale(t)) |>
+        y  = dplyr::all_of(yname)) |>
+      dplyr::mutate(t = scales::rescale(.data$t)) |>
       tidyr::drop_na()
 
     # --- messages!
 
-    writeLines(
-      "Warning: This function drops missing values. Tread carefully.")
+    message("This function drops missing values. Tread carefully.")
 
     if(
       sort(unique(df$y))[1] == 0 &
       sort(unique(df$y))[2] == 1 &
       length(unique(df$y)) == 2) {
     } else{
-      return(stop(
-        "Error: The outcome needs to be binary and coded as 0 and 1."))
+      stop("Error: The outcome needs to be binary and coded as 0 and 1.")
     }
     if(length(unique(df$t)) <= 1) {
-      return(stop(
-        "Error: There needs to be at least two time periods."))
+      stop("Error: There needs to be at least two time periods.")
     }
     if(step1 > step2 | step2 > step3 | step1 > step3) {
-      return(stop(
-        "Error: Each `step` should have higher runs than the previous ones."))
+      stop("Error: Each `step` should have higher runs than the previous ones.")
     }
 
     # ----------------------------------------------------- #
@@ -123,28 +107,26 @@ gridSearch <-
       rf <- df |>
         tidyr::pivot_wider(names_from = "t", values_from = "y") |>
         janitor::clean_names() |>
-        tidyr::unite("patterns", !pid, sep = "") |>
+        tidyr::unite("patterns", !.data$pid, sep = "") |>
         dplyr::summarize(reference = dplyr::n(), .by = "patterns") |>
-        dplyr::arrange(patterns) ## contingency of 0s and 1s across waves
+        dplyr::arrange(.data$patterns) ## contingency of 0s and 1s across waves
 
     }
 
     if (pattern == "slopes") {
 
       rf <- gridsearch::varyingSlopes(df,
-                                      pname = pid,
-                                      tname = t,
-                                      yname = y)
+                                      pname = "pid",
+                                      tname = "t",
+                                      yname = "y")
 
     }
 
     # --- part 3: fake-data grid
 
     fd <- tidyr::expand_grid(
-      p_n =
-        df |> dplyr::distinct(pid) |> nrow(),
-      p_t =
-        df |> dplyr::distinct(t) |> nrow(),
+      p_n = dplyr::distinct(df, .data$pid) |> nrow(),
+      p_t = dplyr::distinct(df, .data$t) |> nrow(),
       p_rate =     seq(
         from = 0,
         to   = 1,
@@ -156,11 +138,13 @@ gridSearch <-
         length.out = 20
       ),
       p_dir = c(0, 0.25, 0.50, 0.75, 1),
-      p_res = df |> dplyr::pull(y) |> mean()
+      p_res = mean(df$y)
     ) |>
       ## round it up
-      dplyr::mutate(p_rate = round(p_rate, 2),
-                    p_strength = round(p_strength, 1))
+      dplyr::mutate(
+        p_rate = round(.data$p_rate, 2),
+        p_strength = round(.data$p_strength, 1)
+      )
 
     # --- part 4: function for parallelization
 
@@ -173,10 +157,10 @@ gridSearch <-
             data =
               furrr::future_pmap(
                 ## mapping list
-                .l = list(p_n, p_t, p_strength, p_rate, p_dir, p_res),
+                .l = list(.data$p_n, .data$p_t, .data$p_strength, .data$p_rate, .data$p_dir, .data$p_res),
                 ## refer to list based on index
                 .f = purrr::possibly(
-                  ~ gridsearch::buildDGP(
+                  ~ buildDGP(
                     # varying parameters
                     n = ..1,
                     t = ..2,
@@ -198,10 +182,10 @@ gridSearch <-
           ) |>
           tidyr::unnest(data) |>
           dplyr::left_join(rf, by = "patterns") |>
-          dplyr::mutate(reference = ifelse(is.na(reference) == TRUE, 0, reference)) |>
-          dplyr::mutate(deviation = abs(sim_counts - reference)) |>
+          dplyr::mutate(reference = ifelse(is.na(.data$reference) == TRUE, 0, .data$reference)) |>
+          dplyr::mutate(deviation = abs(.data$sim_counts - .data$reference)) |>
           dplyr::summarize(
-            deviation_sum = sum(deviation),
+            deviation_sum = sum(.data$deviation),
             .by = c("p_rate", "p_strength", "p_dir", "sim")
           )
 
@@ -214,10 +198,10 @@ gridSearch <-
             data =
               furrr::future_pmap(
                 ## mapping list
-                .l = list(p_n, p_t, p_strength, p_rate, p_dir, p_res),
+                .l = list(.data$p_n, .data$p_t, .data$p_strength, .data$p_rate, .data$p_dir, .data$p_res),
                 ## refer to list based on index
                 .f = purrr::possibly(
-                  ~ gridsearch::buildDGP(
+                  ~ buildDGP(
                     # varying parameters
                     n = ..1,
                     t = ..2,
@@ -230,7 +214,7 @@ gridSearch <-
                     patterns = FALSE,
                     slopes = TRUE
                   ) |>
-                    dplyr::summarize(ks = stats::ks.test(estimate,
+                    dplyr::summarize(ks = stats::ks.test(.data$estimate,
                                                          rf$estimate,
                                                          exact = TRUE)$statistic)
                 ),
@@ -251,22 +235,20 @@ gridSearch <-
 
     if (pattern == "contingency") {
 
-      writeLines(
-        "\n We now start the calculations. There will be 3 steps.")
+      cat("\n We now start the calculations. There will be 3 steps.")
 
       # ----------------------------------------------------- #
 
       # --- search step 1
 
-      writeLines(
-        "\n Step 1 for grid search...")
+      message("Step 1 for grid search...")
 
       fd_1 <-
         tidyr::expand_grid(fd, sim = c(1:step1))
       fd_1 <- parallel_grid(fd_1)
       fd_1 <- fd_1 |>
         dplyr::summarize(
-          error_1 = mean(deviation_sum),
+          error_1 = mean(.data$deviation_sum),
           .by = c("p_rate", "p_strength", "p_dir")
         )
 
@@ -278,17 +260,15 @@ gridSearch <-
 
       # --- search step 2
 
-      writeLines(
-        "\n Step 2 for grid search...")
+      message("Step 2 for grid search...")
 
       fd_2 <-
-        tidyr::expand_grid(fd |>
-                             dplyr::filter(error_1 <= stats::quantile(error_1, .5, na.rm = TRUE)),
+        tidyr::expand_grid(dplyr::filter(fd, .data$error_1 <= stats::quantile(.data$error_1, .5, na.rm = TRUE)),
                            sim = c(1:(step2 - step1)))
       fd_2 <- parallel_grid(fd_2)
       fd_2 <- fd_2 |>
         dplyr::summarize(
-          error_2 = mean(deviation_sum),
+          error_2 = mean(.data$deviation_sum),
           .by = c("p_rate", "p_strength", "p_dir")
         )
 
@@ -297,28 +277,24 @@ gridSearch <-
         dplyr::left_join(fd_2, by = c("p_rate", "p_strength", "p_dir")) |>
         ## update the error term for group 2
         dplyr::mutate(error_2 = dplyr::case_when(
-          is.na(error_1) == TRUE ~ NA_real_,
-          TRUE ~
-            (step1 / (step1 + step2)) * error_1
-          +
-            (step2 / (step1 + step2)) * error_2
+          is.na(.data$error_1) ~ NA_real_,
+          .default = (step1 / (step1 + step2)) * .data$error_1 + (step2 / (step1 + step2)) * .data$error_2
         ))
 
       # ----------------------------------------------------- #
 
       # --- search step 3
 
-      writeLines(
-        "\n Step 3 for grid search...")
+      message("Step 3 for grid search...")
 
       fd_3 <-
         tidyr::expand_grid(fd |>
-                             dplyr::filter(error_2 <= stats::quantile(error_2, .2, na.rm = TRUE)),
+                             dplyr::filter(.data$error_2 <= stats::quantile(.data$error_2, .2, na.rm = TRUE)),
                            sim = c(1:(step3 - step2)))
       fd_3 <- parallel_grid(fd_3)
       fd_3 <- fd_3 |>
         dplyr::summarize(
-          error_3 = mean(deviation_sum),
+          error_3 = mean(.data$deviation_sum),
           .by = c("p_rate", "p_strength", "p_dir")
         )
 
@@ -327,11 +303,8 @@ gridSearch <-
         dplyr::left_join(fd_3, by = c("p_rate", "p_strength", "p_dir")) |>
         ## update the error term for group 3
         dplyr::mutate(error_3 = dplyr::case_when(
-          is.na(error_2) == TRUE ~ NA_real_,
-          TRUE ~
-            (step2 / (step2 + step3)) * error_2
-          +
-            (step3 / (step2 + step3)) * error_3
+          is.na(.data$error_2) ~ NA_real_,
+          .default = (step2 / (step2 + step3)) * .data$error_2 + (step3 / (step2 + step3)) * .data$error_3
         ))
 
     }
@@ -357,7 +330,7 @@ gridSearch <-
       fd_1 <- parallel_grid(fd_1)
       fd_1 <- fd_1 |>
         tidyr::unnest(cols = data) |>
-        dplyr::summarize(ks_stat1 = mean(ks),
+        dplyr::summarize(ks_stat1 = mean(.data$ks),
                          .by = c("p_rate", "p_strength", "p_dir"))
 
       # --- search step 1, mapping and cleaning
@@ -373,12 +346,12 @@ gridSearch <-
 
       fd_2 <-
         tidyr::expand_grid(fd |>
-                             dplyr::filter(ks_stat1 <= stats::quantile(ks_stat1, .5, na.rm = TRUE)),
+                             dplyr::filter(.data$ks_stat1 <= stats::quantile(.data$ks_stat1, .5, na.rm = TRUE)),
                            sim = c(1:(step2 - step1)))
       fd_2 <- parallel_grid(fd_2)
       fd_2 <- fd_2 |>
         tidyr::unnest(cols = data) |>
-        dplyr::summarize(ks_stat2 = mean(ks),
+        dplyr::summarize(ks_stat2 = mean(.data$ks),
                          .by = c("p_rate", "p_strength", "p_dir"))
 
       # --- search step 2, mapping and cleaning
@@ -386,11 +359,11 @@ gridSearch <-
         dplyr::left_join(fd_2, by = c("p_rate", "p_strength", "p_dir")) |>
         ## update the error term for group 2
         dplyr::mutate(ks_stat2 = dplyr::case_when(
-          is.na(ks_stat1) == TRUE ~ NA_real_,
-          TRUE ~
-            (step1 / (step1 + step2)) * ks_stat1
+          is.na(.data$ks_stat1) ~ NA_real_,
+          .default =
+            (step1 / (step1 + step2)) * .data$ks_stat1
           +
-            (step2 / (step1 + step2)) * ks_stat2
+            (step2 / (step1 + step2)) * .data$ks_stat2
         ))
 
       # ----------------------------------------------------- #
@@ -402,12 +375,12 @@ gridSearch <-
 
       fd_3 <-
         tidyr::expand_grid(fd |>
-                             dplyr::filter(ks_stat2 <= stats::quantile(ks_stat2, .2, na.rm = TRUE)),
+                             dplyr::filter(.data$ks_stat2 <= stats::quantile(.data$ks_stat2, .2, na.rm = TRUE)),
                            sim = c(1:(step3 - step2)))
       fd_3 <- parallel_grid(fd_3)
       fd_3 <- fd_3 |>
         tidyr::unnest(cols = data) |>
-        dplyr::summarize(ks_stat3 = mean(ks),
+        dplyr::summarize(ks_stat3 = mean(.data$ks),
                          .by = c("p_rate", "p_strength", "p_dir"))
 
       # --- search step 3, mapping and cleaning
@@ -415,11 +388,11 @@ gridSearch <-
         dplyr::left_join(fd_3, by = c("p_rate", "p_strength", "p_dir")) |>
         ## update the error term for group 3
         dplyr::mutate(ks_stat3 = dplyr::case_when(
-          is.na(ks_stat2) == TRUE ~ NA_real_,
-          TRUE ~
-            (step2 / (step2 + step3)) * ks_stat2
+          is.na(ks_stat2) ~ NA_real_,
+          .default =
+            (step2 / (step2 + step3)) * .data$ks_stat2
           +
-            (step3 / (step2 + step3)) * ks_stat3
+            (step3 / (step2 + step3)) * .data$ks_stat3
         ))
 
     }
@@ -433,7 +406,7 @@ gridSearch <-
       fd <- fd |>
         ## cleanup
         dplyr::mutate(p_dir = factor(
-          p_dir,
+          .data$p_dir,
           levels = c(0, 0.25, 0.5, 0.75, 1),
           labels = c(
             "100% Down",
@@ -443,14 +416,14 @@ gridSearch <-
             "100% Up"
           )
         )) |>
-        dplyr::mutate(error = error_3) |>
-        dplyr::mutate(error = ifelse(is.na(error) == TRUE, error_2, error)) |>
-        dplyr::mutate(error = ifelse(is.na(error) == TRUE, error_1, error)) |>
+        dplyr::rename(error = "error_3") |>
+        dplyr::mutate(error = ifelse(is.na(.data$error), .data$error_2, .data$error)) |>
+        dplyr::mutate(error = ifelse(is.na(.data$error), .data$error_1, .data$error)) |>
         dplyr::select(
-          rate = p_rate,
-          strength = p_strength,
-          direction = p_dir,
-          error
+          rate = "p_rate",
+          strength = "p_strength",
+          direction = "p_dir",
+          "error"
         ) |>
         dplyr::mutate(pattern = "contingency")
 
@@ -463,7 +436,7 @@ gridSearch <-
       fd <- fd |>
         ## cleanup
         dplyr::mutate(p_dir = factor(
-          p_dir,
+          .data$p_dir,
           levels = c(0, 0.25, 0.5, 0.75, 1),
           labels = c(
             "100% Down",
@@ -473,14 +446,14 @@ gridSearch <-
             "100% Up"
           )
         )) |>
-        dplyr::mutate(ks_stat = ks_stat3) |>
-        dplyr::mutate(ks_stat = ifelse(is.na(ks_stat) == TRUE, ks_stat2, ks_stat)) |>
-        dplyr::mutate(ks_stat = ifelse(is.na(ks_stat) == TRUE, ks_stat1, ks_stat)) |>
+        dplyr::rename(ks_stat = "ks_stat3") |>
+        dplyr::mutate(ks_stat = ifelse(is.na(.data$ks_stat), .data$ks_stat2, .data$ks_stat)) |>
+        dplyr::mutate(ks_stat = ifelse(is.na(.data$ks_stat), .data$ks_stat1, .data$ks_stat)) |>
         dplyr::select(
-          rate = p_rate,
-          strength = p_strength,
-          direction = p_dir,
-          error = ks_stat
+          rate = "p_rate",
+          strength = "p_strength",
+          direction = "p_dir",
+          error = "ks_stat"
         ) |>
         dplyr::mutate(pattern = "slopes")
 
