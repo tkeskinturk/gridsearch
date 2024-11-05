@@ -16,7 +16,6 @@
 #' @param qcut1 Cut 1 for the quantile method.
 #' @param qcut2 Cut 2 for the quantile method.
 #' @param qcut3 Cut 3 for the quantile method.
-#' @param pid_n The number of unique individuals in the original dataframe.
 #' @param ncut1 Cut 1 for the normalized method.
 #' @param ncut2 Cut 2 for the normalized method.
 #' @param ncut3 Cut 3 for the normalized method.
@@ -32,7 +31,6 @@ gridPlot <-
            qcut1 = 0.05,
            qcut2 = 0.10,
            qcut3 = 0.20,
-           pid_n = NULL,
            ncut1 = 0.05,
            ncut2 = 0.10,
            ncut3 = 0.20) {
@@ -41,13 +39,10 @@ gridPlot <-
     lvls <- paste("Group", 1:4)
 
     if (data |>
-        dplyr::select(dplyr::any_of(c("rate", "strength", "direction", "error", "pattern"))) |>
-        ncol() != 5
+        dplyr::select(dplyr::any_of(c("rate", "strength", "direction", "error", "pattern", "n"))) |>
+        ncol() != 6
     )
       stop("Error: One or more columns from `gridSearch` is missing.")
-
-    if (method == "normalized" & is.null(pid_n) == TRUE)
-      stop("Error: When using method `normalized`, you need to supply the number of unique PIDs")
 
     ## organize data
 
@@ -73,7 +68,7 @@ gridPlot <-
 
       if (unique(data$pattern) == "contingency") {
         data <- data |>
-          dplyr::mutate(error = .data$error / pid_n) |>
+          dplyr::mutate(error = .data$error / .data$n) |>
           dplyr::mutate(
             group = dplyr::case_when(
               .data$error <= ncut1 ~ "Group 1",

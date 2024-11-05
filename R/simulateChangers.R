@@ -129,11 +129,11 @@ simulateChangers <-
               predicted =
                 dplyr::case_when(
                   (.data$estimate > 0) &
-                    (abs(.data$estimate - 0) >= abs(.data$estimate - .data$strength)) ~
+                    (abs(.data$estimate - 0) >= abs(.data$estimate - strength)) ~
                     1,
                   (.data$estimate < 0)
                   &
-                    (abs(.data$estimate - 0) >= abs(.data$estimate + .data$strength)) == TRUE  ~
+                    (abs(.data$estimate - 0) >= abs(.data$estimate + strength)) == TRUE  ~
                     1,
                   .default = 0
                 )
@@ -160,7 +160,7 @@ simulateChangers <-
       # step 3: organize
       dplyr::mutate(confused =
                       purrr::map(.x = .data$confusion, .f = ~ confusionMatrix(.))) |>
-      dplyr::select("sims", "confused") |> tidyr::unnest_wider(.data$confused)
+      dplyr::select("sims", "confused") |> tidyr::unnest_wider(confused)
 
     return(data)
 

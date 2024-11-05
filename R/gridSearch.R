@@ -241,7 +241,7 @@ gridSearch <-
 
       # --- search step 1
 
-      message("Step 1 for grid search...")
+      message("\n Step 1 for grid search...")
 
       fd_1 <-
         tidyr::expand_grid(fd, sim = c(1:step1))
@@ -260,7 +260,7 @@ gridSearch <-
 
       # --- search step 2
 
-      message("Step 2 for grid search...")
+      message("\n Step 2 for grid search...")
 
       fd_2 <-
         tidyr::expand_grid(dplyr::filter(fd, .data$error_1 <= stats::quantile(.data$error_1, .5, na.rm = TRUE)),
@@ -285,7 +285,7 @@ gridSearch <-
 
       # --- search step 3
 
-      message("Step 3 for grid search...")
+      message("\n Step 3 for grid search...")
 
       fd_3 <-
         tidyr::expand_grid(fd |>
@@ -315,15 +315,13 @@ gridSearch <-
 
     if (pattern == "slopes") {
 
-      writeLines(
-        "\n We now start the calculations. There will be 3 steps.")
+      cat("\n We now start the calculations. There will be 3 steps.")
 
       # ----------------------------------------------------- #
 
       # --- search step 1
 
-      writeLines(
-        "\n Step 1 for grid search...")
+      message("\n Step 1 for grid search...")
 
       fd_1 <-
         tidyr::expand_grid(fd, sim = c(1:step1))
@@ -341,8 +339,7 @@ gridSearch <-
 
       # --- search step 2
 
-      writeLines(
-        "\n Step 2 for grid search...")
+      message("\n Step 2 for grid search...")
 
       fd_2 <-
         tidyr::expand_grid(fd |>
@@ -370,8 +367,7 @@ gridSearch <-
 
       # --- search step 3
 
-      writeLines(
-        "\n Step 3 for grid search...")
+      message("\n Step 3 for grid search...")
 
       fd_3 <-
         tidyr::expand_grid(fd |>
@@ -425,7 +421,8 @@ gridSearch <-
           direction = "p_dir",
           "error"
         ) |>
-        dplyr::mutate(pattern = "contingency")
+        dplyr::mutate(pattern = "contingency") |>
+        dplyr::mutate(n = df |> dplyr::distinct(pid) |> nrow())
 
       return(fd)
 
@@ -455,7 +452,8 @@ gridSearch <-
           direction = "p_dir",
           error = "ks_stat"
         ) |>
-        dplyr::mutate(pattern = "slopes")
+        dplyr::mutate(pattern = "slopes") |>
+        dplyr::mutate(n = df |> dplyr::distinct(pid) |> nrow())
 
       return(fd)
 
