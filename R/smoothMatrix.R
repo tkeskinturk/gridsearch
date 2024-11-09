@@ -9,6 +9,7 @@
 # FUNCTION CALL -------------------------------------------------------------- #
 
 #' Smooth Matrix
+#'
 #' This function takes an `n x m` matrix as its input and averages each cell by using the values from its neighboring cells.
 #'
 #' @param mat An `n x m` matrix.

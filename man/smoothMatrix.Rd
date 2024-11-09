@@ -2,8 +2,7 @@
 % Please edit documentation in R/smoothMatrix.R
 \name{smoothMatrix}
 \alias{smoothMatrix}
-\title{Smooth Matrix
-This function takes an \verb{n x m} matrix as its input and averages each cell by using the values from its neighboring cells.}
+\title{Smooth Matrix}
 \usage{
 smoothMatrix(mat)
 }
@@ -14,6 +13,5 @@ smoothMatrix(mat)
 A matrix.
 }
 \description{
-Smooth Matrix
 This function takes an \verb{n x m} matrix as its input and averages each cell by using the values from its neighboring cells.
 }
