@@ -23,7 +23,8 @@ Imports:
     rlang,
     scales,
     tibble,
-    tidyr
+    tidyr,
+    textshape
 Suggests: 
     testthat (>= 3.0.0)
 BugReports: https://github.com/tkeskinturk/gridsearch/issues

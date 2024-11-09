@@ -10,9 +10,9 @@ gridSearch(
   tname,
   pname,
   pattern = c("contingency", "slopes"),
-  step1 = 30,
-  step2 = 120,
-  step3 = 480,
+  step1 = 1,
+  step2 = 30,
+  step3 = 500,
   reliability = 0.9,
   seed = 11235,
   workers = 8
@@ -38,6 +38,8 @@ gridSearch(
 \item{reliability}{The reliability score of the outcome measurement.}
 
 \item{seed}{Set seed.}
+
+\item{workers}{The number of workers for parallelization.}
 }
 \value{
 A data frame.

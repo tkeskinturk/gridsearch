@@ -22,6 +22,7 @@
 #' @param step3 The number of simulated datasets in Step 3.
 #' @param reliability The reliability score of the outcome measurement.
 #' @param seed Set seed.
+#' @param workers The number of workers for parallelization.
 #'
 #' @return A data frame.
 #' @export
@@ -46,11 +47,11 @@ gridSearch <-
     # pattern match
     pattern = c("contingency", "slopes"),
     # step 1 runs
-    step1 = 30,
+    step1 = 1,
     # step 2 runs
-    step2 = 120,
+    step2 = 30,
     # step 3 runs
-    step3 = 480,
+    step3 = 500,
     # reliability
     reliability = 0.9,
     # seed
@@ -129,16 +130,16 @@ gridSearch <-
     fd <- tidyr::expand_grid(
       p_n = dplyr::distinct(df, .data$pid) |> nrow(),
       p_t = dplyr::distinct(df, .data$t) |> nrow(),
-      p_rate =     seq(
+      p_rate =     round(seq(
         from = 0,
         to   = 1,
         length.out = 21
-      ),
-      p_strength = seq(
+      ), 2),
+      p_strength = round(seq(
         from = 0.1,
         to   = 2,
         length.out = 20
-      ),
+      ), 2),
       p_dir = c(0, 0.25, 0.50, 0.75, 1),
       p_res = mean(df$y)
     ) |>
@@ -254,9 +255,57 @@ gridSearch <-
           .by = c("p_rate", "p_strength", "p_dir")
         )
 
-      # --- search step 1, mapping and cleaning
+      # --- search step 1, apply grid smoothing
+      fd_smoothed <-
+        tibble::tibble(
+          p_rate = double(),
+          p_strength = double(),
+          p_dir = double(),
+          error_1 = double()
+        )
+
+      for (dir in c(0, 0.25, 0.5, 0.75, 1)) {
+
+        ## get matrix representation
+        mat <- fd_1 |>
+          dplyr::filter(.data$p_dir == dir) |>
+          dplyr::select(-.data$p_dir) |>
+          tidyr::pivot_wider(names_from = "p_strength", values_from = "error_1") |>
+          textshape::column_to_rownames('p_rate') |>
+          as.matrix()
+
+        ## smooth the matrix with neighboring cells and round
+        mat <- round(smoothMatrix(mat), 2)
+
+        ## reshape to the initial tidy version
+        colnames(mat) <- round(seq(
+          from = 0.1,
+          to = 2,
+          length.out = 20
+        ), 2)
+        mat <- mat |>
+          tibble::as_tibble(.data) |>
+          dplyr::mutate(p_rate = round(seq(
+            from = 0,
+            to   = 1,
+            length.out = 21
+          ), 2)) |>
+          dplyr::relocate(.data$p_rate) |>
+          tidyr::pivot_longer(cols = -.data$p_rate,
+                              names_to = "p_strength",
+                              values_to = "error_1") |>
+          dplyr::mutate(p_strength = as.numeric(.data$p_strength),
+                        p_rate     = as.numeric(.data$p_rate)) |>
+          dplyr::mutate(p_dir = dir) |>
+          dplyr::relocate(.data$p_dir, .before = "error_1")
+        fd_smoothed <- fd_smoothed |> dplyr::bind_rows(mat)
+
+      }
+
+      # --- search step 2, mapping and cleaning
       fd <- fd |>
-        dplyr::left_join(fd_1, by = c("p_rate", "p_strength", "p_dir"))
+        dplyr::left_join(fd_smoothed, by = c("p_rate", "p_strength", "p_dir"))
+      rm(fd_smoothed, mat) # clean-up
 
       # ----------------------------------------------------- #
 
@@ -265,8 +314,11 @@ gridSearch <-
       message("\n Step 2 for grid search...")
 
       fd_2 <-
-        tidyr::expand_grid(dplyr::filter(fd, .data$error_1 <= stats::quantile(.data$error_1, .5, na.rm = TRUE)),
-                           sim = c(1:(step2 - step1)))
+        tidyr::expand_grid(
+          fd |>
+            dplyr::arrange(.data$error_1) |>
+            dplyr::slice(1:1050),
+        sim = c(1:(step2 - step1)))
       fd_2 <- parallel_grid(fd_2)
       fd_2 <- fd_2 |>
         dplyr::summarize(
@@ -274,7 +326,7 @@ gridSearch <-
           .by = c("p_rate", "p_strength", "p_dir")
         )
 
-      # --- search step 2, mapping and cleaning
+      # --- search step 1, mapping and cleaning
       fd <- fd |>
         dplyr::left_join(fd_2, by = c("p_rate", "p_strength", "p_dir")) |>
         ## update the error term for group 2
@@ -290,9 +342,11 @@ gridSearch <-
       message("\n Step 3 for grid search...")
 
       fd_3 <-
-        tidyr::expand_grid(fd |>
-                             dplyr::filter(.data$error_2 <= stats::quantile(.data$error_2, .2, na.rm = TRUE)),
-                           sim = c(1:(step3 - step2)))
+        tidyr::expand_grid(
+          fd |>
+            dplyr::arrange(.data$error_2) |>
+            dplyr::slice(1:420),
+          sim = c(1:(step3 - step2)))
       fd_3 <- parallel_grid(fd_3)
       fd_3 <- fd_3 |>
         dplyr::summarize(
@@ -300,7 +354,7 @@ gridSearch <-
           .by = c("p_rate", "p_strength", "p_dir")
         )
 
-      # --- search step 3, mapping and cleaning
+      # --- search step 1, mapping and cleaning
       fd <- fd |>
         dplyr::left_join(fd_3, by = c("p_rate", "p_strength", "p_dir")) |>
         ## update the error term for group 3
@@ -424,7 +478,7 @@ gridSearch <-
           "error"
         ) |>
         dplyr::mutate(pattern = "contingency") |>
-        dplyr::mutate(n = df |> dplyr::distinct(pid) |> nrow())
+        dplyr::mutate(n = df |> dplyr::distinct(.data$pid) |> nrow())
 
       return(fd)
 
@@ -455,7 +509,7 @@ gridSearch <-
           error = "ks_stat"
         ) |>
         dplyr::mutate(pattern = "slopes") |>
-        dplyr::mutate(n = df |> dplyr::distinct(pid) |> nrow())
+        dplyr::mutate(n = df |> dplyr::distinct(.data$pid) |> nrow())
 
       return(fd)
 

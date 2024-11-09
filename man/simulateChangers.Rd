@@ -35,6 +35,8 @@ simulateChangers(
 \item{nrep}{The number of simulation runs.}
 
 \item{seed}{Set seed.}
+
+\item{workers}{The number of workers for parallelization.}
 }
 \value{
 A data frame.

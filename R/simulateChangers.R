@@ -20,6 +20,7 @@
 #' @param reliable The reliability score of the outcome measurement.
 #' @param nrep The number of simulation runs.
 #' @param seed Set seed.
+#' @param workers The number of workers for parallelization.
 #'
 #' @return A data frame.
 #' @export
@@ -160,7 +161,7 @@ simulateChangers <-
       # step 3: organize
       dplyr::mutate(confused =
                       purrr::map(.x = .data$confusion, .f = ~ confusionMatrix(.))) |>
-      dplyr::select("sims", "confused") |> tidyr::unnest_wider(confused)
+      dplyr::select("sims", "confused") |> tidyr::unnest_wider(.data$confused)
 
     return(data)
 
