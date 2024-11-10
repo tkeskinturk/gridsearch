@@ -11,7 +11,7 @@
 
 #' Grid Search for Adjudicating DGPs
 #'
-#' This function uses a three-step grid search algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements fake-data simulations from a grid of plausible values---rate of change ranging from 0% to 100%, strength of change ranging from 0 SD to 2 SD, and 5 directional cases (everyone changing negatively, everyone changing positively, half changing negatively and half changing positively, 25% changing negatively and 75% changing positively, and 75% changing negatively and 25% changing positive), calculates the distribution of response patterns or slopes, and provides an error term that summarizes the distance of the DGP from the observed values.
+#' This function uses a three-step grid search algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements fake-data simulations from a grid of plausible values---rate of change ranging from 0% to 100%, strength of change ranging from 0 SD to 2 SD, and 5 directional cases (everyone changing negatively, everyone changing positively, half changing negatively and half changing positively, 25% changing negatively and 75% changing positively, and 75% changing negatively and 25% changing positively), calculates the distribution of response patterns or slopes, and provides an error term that summarizes the distance of the DGP from the observed values.
 #' @param data A dataframe.
 #' @param yname The outcome identifier.
 #' @param tname The time identifier.
@@ -25,6 +25,8 @@
 #' @param workers The number of workers for parallelization (note that parallelization is highly recommended for reasonable duration).
 #'
 #' @return A data frame.
+#'
+#' @details # Examples
 #'
 #' **Basic [gridSearch()] call:**
 #' ```{r, comment = "#>", collapse = TRUE}

@@ -43,7 +43,11 @@ gridSearch(
 }
 \value{
 A data frame.
-
+}
+\description{
+This function uses a three-step grid search algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements fake-data simulations from a grid of plausible values---rate of change ranging from 0\% to 100\%, strength of change ranging from 0 SD to 2 SD, and 5 directional cases (everyone changing negatively, everyone changing positively, half changing negatively and half changing positively, 25\% changing negatively and 75\% changing positively, and 75\% changing negatively and 25\% changing positively), calculates the distribution of response patterns or slopes, and provides an error term that summarizes the distance of the DGP from the observed values.
+}
+\section{Examples}{
 \strong{Basic \code{\link[=gridSearch]{gridSearch()}} call:}
 
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{set.seed(11235)
@@ -93,6 +97,4 @@ gridSearch(data = data,
 #> # i 2,090 more rows
 }\if{html}{\out{</div>}}
 }
-\description{
-This function uses a three-step grid search algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements fake-data simulations from a grid of plausible values---rate of change ranging from 0\% to 100\%, strength of change ranging from 0 SD to 2 SD, and 5 directional cases (everyone changing negatively, everyone changing positively, half changing negatively and half changing positively, 25\% changing negatively and 75\% changing positively, and 75\% changing negatively and 25\% changing positive), calculates the distribution of response patterns or slopes, and provides an error term that summarizes the distance of the DGP from the observed values.
-}
+
