@@ -12,12 +12,14 @@
 #'
 #' This function estimates individual-level logistic regression models by regressing binary outcomes on a normalized time variable.
 #' @param data A dataframe.
+#' @keywords internal
 #' @param pname The unit identifier.
 #' @param tname The time identifier.
 #' @param yname The outcome identifier.
 #'
 #' @return A data frame.
-#' @export
+#' @noRd
+#' @keywords internal
 #'
 
 varyingSlopes <-
@@ -44,19 +46,28 @@ varyingSlopes <-
           {
             yname
           }
-        }) |>
-      dplyr::mutate(t = scales::rescale(t)) |>
-      tidyr::drop_na()
+        })
 
-    ## get unique model matrix
-    X = stats::model.matrix( ~ t, data = df |>
-                               dplyr::filter(.data$pid == 1) |> dplyr::distinct(.data$pid, .data$t))
+    ## get unique `t`
+    if (df |>
+      dplyr::summarize(pattern = list(.data$t), .by = 'pid') |>
+      dplyr::count(.data$pattern) |>
+      nrow() != 1) stop(
+        "Error: The dataset is not balanced.")
+    X <- stats::model.matrix(~ t,
+                            data = df |>
+                              dplyr::filter(.data$pid == 1))
+
+    ## get unique `y`
+    Y <- df |>
+      dplyr::summarize(pattern = list(.data$y), .by = 'pid') |>
+      dplyr::count(.data$pattern)
 
     ## function for probs
-    bounded_change <- function(d) {
+    bounded_change <- function(X, Y) {
       fit <- fastglm::fastglmPure(
         X,
-        d$y,
+        Y,
         family = stats::binomial(),
         method = 1)
       prob1 <- stats::plogis(fit$coefficients[1])
@@ -64,13 +75,19 @@ varyingSlopes <-
       return( round(prob2 - prob1, 3) )
     }
 
-    # extract coefficient per pid
-    estimates_coef <-
-      suppressWarnings(
-        data.table::as.data.table(df)[, "estimate" := bounded_change(.SD), by = "pid"]
-        ) |>
-      tibble::as_tibble() |>
-      dplyr::distinct(.data$pid, .data$estimate)
+    ## pattern fits
+    Y <-
+      suppressWarnings(Y |>
+                         dplyr::mutate(estimate = purrr::map_dbl(
+                           .x = .data$pattern, .f = ~ bounded_change(X = X, Y = .)
+                         )) |>
+                         dplyr::select(-.data$n))
+
+    ## match by patterns
+    estimates_coef <- df |>
+      dplyr::summarize(pattern = list(.data$y), .by = 'pid') |>
+      dplyr::left_join(Y, by = "pattern") |>
+      dplyr::select(.data$pid, .data$estimate)
 
     return(estimates_coef)
 

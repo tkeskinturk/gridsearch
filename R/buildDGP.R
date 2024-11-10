@@ -221,10 +221,10 @@ buildDGP <-
     # SLOPES                                                #
     # ----------------------------------------------------- #
 
-    estimates_coef <- gridsearch::varyingSlopes(data,
-                                                yname = "y_obs",
-                                                tname = "t",
-                                                pname = "pid")
+    estimates_coef <- varyingSlopes(data,
+                                    yname = "y_obs",
+                                    tname = "t",
+                                    pname = "pid")
 
     # --- part M3: export
     if (export   == FALSE  &

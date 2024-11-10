@@ -118,10 +118,10 @@ gridSearch <-
 
     if (pattern == "slopes") {
 
-      rf <- gridsearch::varyingSlopes(df,
-                                      pname = "pid",
-                                      tname = "t",
-                                      yname = "y")
+      rf <- varyingSlopes(df,
+                          pname = "pid",
+                          tname = "t",
+                          yname = "y")
 
     }
 
