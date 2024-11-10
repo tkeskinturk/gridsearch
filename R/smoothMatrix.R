@@ -15,7 +15,8 @@
 #' @param mat An `n x m` matrix.
 #'
 #' @return A matrix.
-#' @export
+#' @noRd
+#' @keywords internal
 #'
 
 smoothMatrix <- function(mat) {

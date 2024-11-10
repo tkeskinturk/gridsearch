@@ -14,7 +14,8 @@
 #' @param confusion_matrix A confusion matrix.
 #'
 #' @return A data frame.
-#' @export
+#' @noRd
+#' @keywords internal
 #'
 
 confusionMatrix <-
