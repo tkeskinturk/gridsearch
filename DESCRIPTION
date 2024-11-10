@@ -18,7 +18,6 @@ Imports:
     ggh4x,
     ggplot2,
     hrbrthemes,
-    janitor,
     purrr,
     rlang,
     scales,

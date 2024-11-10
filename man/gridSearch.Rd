@@ -2,7 +2,7 @@
 % Please edit documentation in R/gridSearch.R
 \name{gridSearch}
 \alias{gridSearch}
-\title{Grid Search}
+\title{Grid Search for Adjudicating DGPs}
 \usage{
 gridSearch(
   data,
@@ -27,7 +27,7 @@ gridSearch(
 
 \item{pname}{The unit identifier.}
 
-\item{pattern}{If \code{pattern = contingency}, the calculations are based on the use of a contingency table of panel patterns; if \code{pattern = slopes}, the calculations are based on individual slope coefficients across time.}
+\item{pattern}{If \code{pattern = contingency}, the calculations are based on the use of a contingency table of panel patterns; if \code{pattern = slopes}, function uses individual slope coefficients.}
 
 \item{step1}{The number of simulated datasets in Step 1.}
 
@@ -35,15 +35,64 @@ gridSearch(
 
 \item{step3}{The number of simulated datasets in Step 3.}
 
-\item{reliability}{The reliability score of the outcome measurement.}
+\item{reliability}{The assumed reliability score of the outcome measurement.}
 
-\item{seed}{Set seed.}
+\item{seed}{Seed for reproducibility.}
 
-\item{workers}{The number of workers for parallelization.}
+\item{workers}{The number of workers for parallelization (note that parallelization is highly recommended for reasonable duration).}
 }
 \value{
 A data frame.
+
+\strong{Basic \code{\link[=gridSearch]{gridSearch()}} call:}
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{set.seed(11235)
+data <- buildDGP(n = 50,
+                 t = 3,
+                 rate = 0.5,
+                 balance_dir = 1,
+                 balance_res = 0.5,
+                 strength = 1,
+                 reliable = 0.9,
+                 export = TRUE,
+                 patterns = FALSE,
+                 slopes = FALSE)
+gridSearch(data = data,
+           yname = 'y_obs',
+           tname = 't',
+           pname = 'pid',
+           pattern = 'contingency',
+           step1 = 1,
+           step2 = 2,
+           step3 = 3,
+           reliability = 0.9,
+           seed = 11234,
+           workers = 10)
+#> This function drops missing values. Tread carefully.
+#> 
+#>  We now start the calculations. There will be 3 steps.
+#> 
+#>  Step 1 for grid search...
+#> 
+#>  Step 2 for grid search...
+#> 
+#>  Step 3 for grid search...
+#> # A tibble: 2,100 x 6
+#>     rate strength direction       error pattern         n
+#>    <dbl>    <dbl> <fct>           <dbl> <chr>       <int>
+#>  1     0      0.1 100\% Down        22   contingency    50
+#>  2     0      0.1 75\% Down-25\% Up  24   contingency    50
+#>  3     0      0.1 50\% Down-50\% Up  23   contingency    50
+#>  4     0      0.1 25\% Down-75\% Up  26.5 contingency    50
+#>  5     0      0.1 100\% Up          22.5 contingency    50
+#>  6     0      0.2 100\% Down        22   contingency    50
+#>  7     0      0.2 75\% Down-25\% Up  24   contingency    50
+#>  8     0      0.2 50\% Down-50\% Up  23.3 contingency    50
+#>  9     0      0.2 25\% Down-75\% Up  25   contingency    50
+#> 10     0      0.2 100\% Up          22.7 contingency    50
+#> # i 2,090 more rows
+}\if{html}{\out{</div>}}
 }
 \description{
-This function uses a three-step grid search algorithm to calculate the extent to which a dataframe can be approximated by a known DGP.
+This function uses a three-step grid search algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements fake-data simulations from a grid of plausible values---rate of change ranging from 0\% to 100\%, strength of change ranging from 0 SD to 2 SD, and 5 directional cases (everyone changing negatively, everyone changing positively, half changing negatively and half changing positively, 25\% changing negatively and 75\% changing positively, and 75\% changing negatively and 25\% changing positive), calculates the distribution of response patterns or slopes, and provides an error term that summarizes the distance of the DGP from the observed values.
 }
