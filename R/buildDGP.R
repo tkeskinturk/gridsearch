@@ -9,21 +9,56 @@
 
 # FUNCTION CALL -------------------------------------------------------------- #
 
-#' Build DGP
+#' Build Panel Data from a DGP
 #'
-#' This function (1) builds simulated datasets using the parameter inputs in the function call, (2) generates panel patterns by concatenating the outcomes across time periods for each individual, and (3) calculates slope coefficients of change at the individual level.
+#' This function (1) builds a simulated dataset using the parameters supplied in the function call, (2) generates distinct outcome patterns by concatenating the outcomes across time periods for each individual and provides counts for each pattern, and (3) calculates slope coefficients of change at the individual level.
 #' @param n The number of units in the DGP.
 #' @param t The number of time periods.
-#' @param rate The percent of units changing across the panel period.
+#' @param rate The percent of units changing across the panel.
 #' @param balance_dir The direction of change, where 0 codes negative change, 1 codes positive change, and all values in-between codes the percentage of changers changing in the positive direction.
-#' @param balance_res The marginal distribution of the outcome (effectively indexing the 0-1 cut for the latent variable).
+#' @param balance_res The marginal distribution of the outcome (effectively regulating the percent distribution of 0s and 1s).
 #' @param strength The strength of change in the latent variable.
 #' @param reliable The reliability score of the outcome measurement.
 #' @param export If `export = TRUE`, the function exports the simulated dataset.
 #' @param patterns If `patterns = TRUE`, the function exports the concatenated panel patterns.
 #' @param slopes If `slopes = TRUE`, the function exports slope coefficients.
 #'
-#' @return A list.
+#' @return A dataframe or a list.
+#'
+#' @details # Examples
+#'
+#' **Basic [buildDGP()] call:**
+#' ```{r, comment = "#>", collapse = TRUE}
+#' set.seed(11235)
+#' data <- buildDGP(n = 2,
+#'                  t = 3,
+#'                  rate = 0.5,
+#'                  balance_dir = 0.5,
+#'                  balance_res = 0.5,
+#'                  strength = 1,
+#'                  reliable = 0.9,
+#'                  export = TRUE,
+#'                  patterns = FALSE,
+#'                  slopes = FALSE)
+#' print(data)
+#' ```
+#'
+#' **Basic [buildDGP()] call with [patterns] only:**
+#' ```{r, comment = "#>", collapse = TRUE}
+#' set.seed(11235)
+#' data <- buildDGP(n = 100,
+#'                  t = 3,
+#'                  rate = 0.5,
+#'                  balance_dir = 0.5,
+#'                  balance_res = 0.5,
+#'                  strength = 1,
+#'                  reliable = 0.9,
+#'                  export = FALSE,
+#'                  patterns = TRUE,
+#'                  slopes = FALSE)
+#' print(data)
+#' ```
+#'
 #' @export
 #'
 
@@ -184,10 +219,8 @@ buildDGP <-
       ## theoretical patterns
       tibble::tibble(
         patterns =
-          expand.grid(replicate(t, 0:1, simplify = F)) |>
-          tibble::as_tibble() |>
-          tidyr::unite(col = "position", sep = "") |>
-          dplyr::pull("position") |>
+          expand.grid(rep(list(0:1), t)) |>
+          apply(1, paste, collapse = "") |>
           sort()
       ) |>
       ## empirical patterns
@@ -195,14 +228,13 @@ buildDGP <-
         data |>
           dplyr::select("pid", "t", "y_obs") |>
           tidyr::pivot_wider(names_from = "t", values_from = "y_obs") |>
-          janitor::clean_names() |>
-          tidyr::unite("patterns", tidyr::starts_with("x"), sep = "") |>
-          dplyr::summarize(sim_counts = dplyr::n(), .by = "patterns") |>
-          dplyr::arrange(.data$patterns),
+          tidyr::unite("patterns", -tidyr::starts_with("pid"), sep = "") |>
+          dplyr::summarize(n = dplyr::n(), .by = "patterns"),
         by = "patterns"
-      ) |>
-      ## fill out the NA terms
-      dplyr::mutate(sim_counts = ifelse(is.na(.data$sim_counts) == TRUE, 0, .data$sim_counts))
+      )
+    ## fill out the NA terms
+    data_patterns$n <-
+      ifelse(is.na(data_patterns$n) == TRUE, 0, data_patterns$n)
 
     if (export   == TRUE   &
         patterns == TRUE   &

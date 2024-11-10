@@ -12,7 +12,7 @@ test_that("Column names are as expected", {
     export = FALSE,
     patterns = TRUE,
     slopes = FALSE
-  )), c("patterns", "sim_counts"))
+  )), c("patterns", "n"))
 
   testthat::expect_equal(colnames(buildDGP(
     export = FALSE,
@@ -33,9 +33,9 @@ test_that("Time variable is normalized", {
   testthat::expect_equal(min(buildDGP()$t), 0)
 })
 
-## no NA values on the `sim_counts`
+## no NA values on the `n`
 test_that("Pattern generation works as expected", {
   testthat::expect_equal(sum(is.na(
-    buildDGP(export = FALSE, patterns = TRUE)$sim_counts
+    buildDGP(export = FALSE, patterns = TRUE)$n
   )), 0)
 })
