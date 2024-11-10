@@ -42,7 +42,7 @@ buildDGP(
 A dataframe or a list.
 }
 \description{
-This function (1) builds a simulated dataset using the parameters supplied in the function call, (2) generates distinct outcome patterns by concatenating the outcomes across time periods for each individual and provides counts for each pattern, and (3) calculates slope coefficients of change at the individual level.
+This function (1) builds a simulated dataset using the parameters supplied in the function call, (2) generates distinct outcome patterns by concatenating the outcomes across time periods for each individual and provides counts for each pattern, (3) calculates slope coefficients of change at the individual level.
 }
 \section{Examples}{
 \strong{Basic \code{\link[=buildDGP]{buildDGP()}} call:}
@@ -51,7 +51,7 @@ This function (1) builds a simulated dataset using the parameters supplied in th
 data <- buildDGP(n = 2,
                  t = 3,
                  rate = 0.5,
-                 balance_dir = 0.5,
+                 balance_dir = 1,
                  balance_res = 0.5,
                  strength = 1,
                  reliable = 0.9,
@@ -63,14 +63,14 @@ print(data)
 #>     pid changer timing     t y_true y_obs
 #>   <int>   <int>  <dbl> <dbl>  <dbl> <dbl>
 #> 1     1       0    0     0   -0.297     1
-#> 2     1       0    0     0.5 -0.297     1
+#> 2     1       0    0     0.5 -0.297     0
 #> 3     1       0    0     1   -0.297     1
 #> 4     2       1    0.5   0   -1.42      0
-#> 5     2       1    0.5   0.5 -2.42      0
-#> 6     2       1    0.5   1   -2.42      0
+#> 5     2       1    0.5   0.5 -0.424     1
+#> 6     2       1    0.5   1   -0.424     0
 }\if{html}{\out{</div>}}
 
-\strong{Basic \code{\link[=buildDGP]{buildDGP()}} call with \link{patterns} only:}
+\strong{Basic \code{\link[=buildDGP]{buildDGP()}} call with \link{patterns}:}
 
 \if{html}{\out{<div class="sourceCode r">}}\preformatted{set.seed(11235)
 data <- buildDGP(n = 100,
@@ -80,10 +80,27 @@ data <- buildDGP(n = 100,
                  balance_res = 0.5,
                  strength = 1,
                  reliable = 0.9,
-                 export = FALSE,
+                 export = TRUE,
                  patterns = TRUE,
                  slopes = FALSE)
 print(data)
+#> $data
+#> # A tibble: 300 x 6
+#>      pid changer timing     t   y_true y_obs
+#>    <int>   <int>  <dbl> <dbl>    <dbl> <dbl>
+#>  1     1       1    0.5   0   -0.297       0
+#>  2     1       1    0.5   0.5 -1.30        0
+#>  3     1       1    0.5   1   -1.30        0
+#>  4     2       0    0     0   -1.42        0
+#>  5     2       0    0     0.5 -1.42        0
+#>  6     2       0    0     1   -1.42        0
+#>  7     3       0    0     0   -0.216       0
+#>  8     3       0    0     0.5 -0.216       0
+#>  9     3       0    0     1   -0.216       0
+#> 10     4       0    0     0   -0.00588     0
+#> # i 290 more rows
+#> 
+#> $patterns
 #> # A tibble: 8 x 2
 #>   patterns     n
 #>   <chr>    <int>

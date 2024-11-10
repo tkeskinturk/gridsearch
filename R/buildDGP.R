@@ -11,7 +11,7 @@
 
 #' Build Panel Data from a DGP
 #'
-#' This function (1) builds a simulated dataset using the parameters supplied in the function call, (2) generates distinct outcome patterns by concatenating the outcomes across time periods for each individual and provides counts for each pattern, and (3) calculates slope coefficients of change at the individual level.
+#' This function (1) builds a simulated dataset using the parameters supplied in the function call, (2) generates distinct outcome patterns by concatenating the outcomes across time periods for each individual and provides counts for each pattern, (3) calculates slope coefficients of change at the individual level.
 #' @param n The number of units in the DGP.
 #' @param t The number of time periods.
 #' @param rate The percent of units changing across the panel.
@@ -33,7 +33,7 @@
 #' data <- buildDGP(n = 2,
 #'                  t = 3,
 #'                  rate = 0.5,
-#'                  balance_dir = 0.5,
+#'                  balance_dir = 1,
 #'                  balance_res = 0.5,
 #'                  strength = 1,
 #'                  reliable = 0.9,
@@ -43,7 +43,7 @@
 #' print(data)
 #' ```
 #'
-#' **Basic [buildDGP()] call with [patterns] only:**
+#' **Basic [buildDGP()] call with [patterns]:**
 #' ```{r, comment = "#>", collapse = TRUE}
 #' set.seed(11235)
 #' data <- buildDGP(n = 100,
@@ -53,7 +53,7 @@
 #'                  balance_res = 0.5,
 #'                  strength = 1,
 #'                  reliable = 0.9,
-#'                  export = FALSE,
+#'                  export = TRUE,
 #'                  patterns = TRUE,
 #'                  slopes = FALSE)
 #' print(data)
