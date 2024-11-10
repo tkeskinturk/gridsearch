@@ -186,7 +186,7 @@ gridSearch <-
           tidyr::unnest(data) |>
           dplyr::left_join(rf, by = "patterns") |>
           dplyr::mutate(reference = ifelse(is.na(.data$reference) == TRUE, 0, .data$reference)) |>
-          dplyr::mutate(deviation = abs(.data$sim_counts - .data$reference)) |>
+          dplyr::mutate(deviation = abs(.data$n - .data$reference)) |>
           dplyr::summarize(
             deviation_sum = sum(.data$deviation),
             .by = c("p_rate", "p_strength", "p_dir", "sim")
