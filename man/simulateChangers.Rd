@@ -44,3 +44,35 @@ A data frame.
 \description{
 This function uses parameter values from a given DGP to calculate kappa, sensitivity, and specificity scores in simulated data frames.
 }
+\section{Examples}{
+\strong{Basic \code{\link[=simulateChangers]{simulateChangers()}} call:}
+
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{set.seed(11235)
+data <- simulateChangers(n = 100,
+                         t = 3,
+                         rate = 0.5,
+                         balance_dir = 1,
+                         balance_res = 0.5,
+                         strength = 1,
+                         reliable = 0.9,
+                         nrep = 100,
+                         seed = 11234,
+                         workers = 10)
+print(data)
+#> # A tibble: 100 x 4
+#>     sims kappa sensitivity specificity
+#>    <int> <dbl>       <dbl>       <dbl>
+#>  1     1 0.340       0.432       0.893
+#>  2     2 0.119       0.278       0.848
+#>  3     3 0.117       0.229       0.885
+#>  4     4 0.236       0.362       0.868
+#>  5     5 0.370       0.481       0.896
+#>  6     6 0.319       0.404       0.906
+#>  7     7 0.26        0.38        0.88 
+#>  8     8 0.266       0.345       0.952
+#>  9     9 0.376       0.545       0.844
+#> 10    10 0.120       0.26        0.86 
+#> # i 90 more rows
+}\if{html}{\out{</div>}}
+}
+

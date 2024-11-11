@@ -23,6 +23,25 @@
 #' @param workers The number of workers for parallelization (note that parallelization is highly recommended for reasonable duration).
 #'
 #' @return A data frame.
+#'
+#' @details # Examples
+#'
+#' **Basic [simulateChangers()] call:**
+#' ```{r, comment = "#>", collapse = TRUE}
+#' set.seed(11235)
+#' data <- simulateChangers(n = 100,
+#'                          t = 3,
+#'                          rate = 0.5,
+#'                          balance_dir = 1,
+#'                          balance_res = 0.5,
+#'                          strength = 1,
+#'                          reliable = 0.9,
+#'                          nrep = 100,
+#'                          seed = 11234,
+#'                          workers = 10)
+#' print(data)
+#' ```
+#'
 #' @export
 #'
 
