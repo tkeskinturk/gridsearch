@@ -8,19 +8,19 @@
 
 # FUNCTION CALL -------------------------------------------------------------- #
 
-#' Simulate Changers
+#' Simulate Changers and Calculate Accuracy
 #'
-#' This function gets several DGP parameters and calculates kappa, sensitivity, and specificity scores for classifying individual changers in simulated data frames.
+#' This function uses parameter values from a given DGP to calculate kappa, sensitivity, and specificity scores in simulated data frames.
 #' @param n The number of units in the DGP.
 #' @param t The number of time periods.
-#' @param rate The percent of units changing across the panel period.
+#' @param rate The percent of units changing across the panel.
 #' @param balance_dir The direction of change, where 0 codes negative change, 1 codes positive change, and all values in-between codes the percentage of changers changing in the positive direction.
-#' @param balance_res The marginal distribution of the outcome (effectively indexing the 0-1 cut for the latent variable).
+#' @param balance_res The marginal distribution of the outcome (effectively regulating the percent distribution of 0s and 1s).
 #' @param strength The strength of change in the latent variable.
 #' @param reliable The reliability score of the outcome measurement.
 #' @param nrep The number of simulation runs.
-#' @param seed Set seed.
-#' @param workers The number of workers for parallelization.
+#' @param seed Seed for reproducibility.
+#' @param workers The number of workers for parallelization (note that parallelization is highly recommended for reasonable duration).
 #'
 #' @return A data frame.
 #' @export
@@ -88,24 +88,27 @@ simulateChangers <-
         data =
           furrr::future_pmap(
             ## mapping list
-            .l = list(.data$p_n, .data$p_t, .data$p_strength, .data$p_rate, .data$p_dir, .data$p_res, .data$p_rel),
+            .l = list(.data$p_n,
+                      .data$p_t,
+                      .data$p_strength,
+                      .data$p_rate,
+                      .data$p_dir,
+                      .data$p_res,
+                      .data$p_rel),
             ## refer to list based on index
-            .f = purrr::possibly(
-              ~ gridsearch::buildDGP(
-                # varying parameters
-                n = ..1,
-                t = ..2,
-                strength = ..3,
-                rate = ..4,
-                balance_dir = ..5,
-                balance_res = ..6,
-                reliable = ..7,
-                export = TRUE,
-                patterns = FALSE,
-                slopes = TRUE
-              )
-            ),
-            ## for reproducibility
+            .f = ~ buildDGP(
+              # varying parameters
+              n = ..1,
+              t = ..2,
+              strength = ..3,
+              rate = ..4,
+              balance_dir = ..5,
+              balance_res = ..6,
+              reliable = ..7,
+              export = TRUE,
+              patterns = FALSE,
+              slopes = TRUE
+            ), ## for reproducibility
             .options = furrr::furrr_options(seed = TRUE),
             .progress = TRUE
           )
@@ -125,7 +128,10 @@ simulateChangers <-
           .y = .data$slopes,
           .f =
             ~ dplyr::left_join(.x |>
-                                 dplyr::distinct(.data$pid, .data$changer), .y, by = "pid") |>
+                                 dplyr::distinct(.data$pid,
+                                                 .data$changer),
+                               .y,
+                               by = "pid") |>
             dplyr::mutate(
               predicted =
                 dplyr::case_when(
@@ -134,7 +140,7 @@ simulateChangers <-
                     1,
                   (.data$estimate < 0)
                   &
-                    (abs(.data$estimate - 0) >= abs(.data$estimate + strength)) == TRUE  ~
+                    (abs(.data$estimate - 0) >= abs(.data$estimate + strength)) ~
                     1,
                   .default = 0
                 )
@@ -160,8 +166,10 @@ simulateChangers <-
 
       # step 3: organize
       dplyr::mutate(confused =
-                      purrr::map(.x = .data$confusion, .f = ~ confusionMatrix(.))) |>
-      dplyr::select("sims", "confused") |> tidyr::unnest_wider(.data$confused)
+                      purrr::map(.x = .data$confusion,
+                                 .f = ~ confusionMatrix(.))) |>
+      dplyr::select("sims", "confused") |>
+      tidyr::unnest_wider(.data$confused)
 
     return(data)
 

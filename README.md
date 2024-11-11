@@ -14,10 +14,10 @@ version, `gridsearch` allows researchers to:
 - Implement a simple grid-search algorithm to see what plausible
   combinations of parameter values may approximate to the observed
   marginal distributions,
-- Plot the resultant error distributions from the grid-search algorithm,
+- Plot distance values generated from the grid-search algorithm,
 - Generate simple simulations for calculating classification accuracy
-  measures to see whether, for a given DGP, we can identify the changing
-  units with a certain level of accuracy.
+  measures to see whether, for a given DGP, we can identify individual
+  changers with a certain level of accuracy.
 
 This package is a companion to the article, *The Promises and Pitfalls
 of Using Panel Data to Understand Individual Belief Change*, stored in

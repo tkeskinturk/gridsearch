@@ -2,7 +2,7 @@
 % Please edit documentation in R/simulateChangers.R
 \name{simulateChangers}
 \alias{simulateChangers}
-\title{Simulate Changers}
+\title{Simulate Changers and Calculate Accuracy}
 \usage{
 simulateChangers(
   n = 1000,
@@ -22,11 +22,11 @@ simulateChangers(
 
 \item{t}{The number of time periods.}
 
-\item{rate}{The percent of units changing across the panel period.}
+\item{rate}{The percent of units changing across the panel.}
 
 \item{balance_dir}{The direction of change, where 0 codes negative change, 1 codes positive change, and all values in-between codes the percentage of changers changing in the positive direction.}
 
-\item{balance_res}{The marginal distribution of the outcome (effectively indexing the 0-1 cut for the latent variable).}
+\item{balance_res}{The marginal distribution of the outcome (effectively regulating the percent distribution of 0s and 1s).}
 
 \item{strength}{The strength of change in the latent variable.}
 
@@ -34,13 +34,13 @@ simulateChangers(
 
 \item{nrep}{The number of simulation runs.}
 
-\item{seed}{Set seed.}
+\item{seed}{Seed for reproducibility.}
 
-\item{workers}{The number of workers for parallelization.}
+\item{workers}{The number of workers for parallelization (note that parallelization is highly recommended for reasonable duration).}
 }
 \value{
 A data frame.
 }
 \description{
-This function gets several DGP parameters and calculates kappa, sensitivity, and specificity scores for classifying individual changers in simulated data frames.
+This function uses parameter values from a given DGP to calculate kappa, sensitivity, and specificity scores in simulated data frames.
 }
