@@ -43,9 +43,7 @@
 <span>  <span class="va">tname</span>,</span>
 <span>  <span class="va">pname</span>,</span>
 <span>  pattern <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"contingency"</span>, <span class="st">"slopes"</span><span class="op">)</span>,</span>
-<span>  step1 <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>  step2 <span class="op">=</span> <span class="fl">30</span>,</span>
-<span>  step3 <span class="op">=</span> <span class="fl">500</span>,</span>
+<span>  steps <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>  reliability <span class="op">=</span> <span class="fl">0.9</span>,</span>
 <span>  seed <span class="op">=</span> <span class="fl">11235</span>,</span>
 <span>  workers <span class="op">=</span> <span class="fl">8</span></span>
@@ -76,16 +74,8 @@
 <dd><p>If <code>pattern = contingency</code>, the calculations are based on the use of a contingency table of panel patterns; if <code>pattern = slopes</code>, function uses individual slope coefficients.</p></dd>
 
 
-<dt id="arg-step-">step1<a class="anchor" aria-label="anchor" href="#arg-step-"></a></dt>
-<dd><p>The number of simulated datasets in Step 1.</p></dd>
-
-
-<dt id="arg-step-">step2<a class="anchor" aria-label="anchor" href="#arg-step-"></a></dt>
-<dd><p>The number of simulated datasets in Step 2.</p></dd>
-
-
-<dt id="arg-step-">step3<a class="anchor" aria-label="anchor" href="#arg-step-"></a></dt>
-<dd><p>The number of simulated datasets in Step 3.</p></dd>
+<dt id="arg-steps">steps<a class="anchor" aria-label="anchor" href="#arg-steps"></a></dt>
+<dd><p>The number of simulated datasets.</p></dd>
 
 
 <dt id="arg-reliability">reliability<a class="anchor" aria-label="anchor" href="#arg-reliability"></a></dt>
@@ -107,7 +97,7 @@
     <div class="section level2">
     <h2 id="examples">Examples<a class="anchor" aria-label="anchor" href="#examples"></a></h2>
     <p><strong>Basic <code>gridSearch()</code> call:</strong></p>
-<p></p><div class="sourceCode r"><pre><code><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">11235</span><span class="op">)</span></span>
+<p></p><div class="sourceCode r"><pre><code><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1871</span><span class="op">)</span></span>
 <span><span class="va">data</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/buildDGP.html">buildDGP</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">50</span>,</span>
 <span>                 t <span class="op">=</span> <span class="fl">3</span>,</span>
 <span>                 rate <span class="op">=</span> <span class="fl">0.5</span>,</span>
@@ -123,9 +113,7 @@
 <span>           tname <span class="op">=</span> <span class="st">'t'</span>,</span>
 <span>           pname <span class="op">=</span> <span class="st">'pid'</span>,</span>
 <span>           pattern <span class="op">=</span> <span class="st">'contingency'</span>,</span>
-<span>           step1 <span class="op">=</span> <span class="fl">1</span>,</span>
-<span>           step2 <span class="op">=</span> <span class="fl">2</span>,</span>
-<span>           step3 <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>           steps <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>           reliability <span class="op">=</span> <span class="fl">0.9</span>,</span>
 <span>           seed <span class="op">=</span> <span class="fl">11234</span>,</span>
 <span>           workers <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
@@ -138,20 +126,20 @@
 <span><span class="co">#&gt;  Step 2 for grid search...</span></span>
 <span><span class="co">#&gt;</span></span>
 <span><span class="co">#&gt;  Step 3 for grid search...</span></span>
-<span><span class="co">#&gt; # A tibble: 2,100 x 6</span></span>
+<span><span class="co">#&gt; # A tibble: 8,200 x 6</span></span>
 <span><span class="co">#&gt;     rate strength direction       error pattern         n</span></span>
 <span><span class="co">#&gt;    &lt;dbl&gt;    &lt;dbl&gt; &lt;fct&gt;           &lt;dbl&gt; &lt;chr&gt;       &lt;int&gt;</span></span>
-<span><span class="co">#&gt;  1     0      0.1 100% Down        22   contingency    50</span></span>
-<span><span class="co">#&gt;  2     0      0.1 75% Down-25% Up  24   contingency    50</span></span>
-<span><span class="co">#&gt;  3     0      0.1 50% Down-50% Up  23   contingency    50</span></span>
-<span><span class="co">#&gt;  4     0      0.1 25% Down-75% Up  26.5 contingency    50</span></span>
-<span><span class="co">#&gt;  5     0      0.1 100% Up          22.5 contingency    50</span></span>
-<span><span class="co">#&gt;  6     0      0.2 100% Down        22   contingency    50</span></span>
-<span><span class="co">#&gt;  7     0      0.2 75% Down-25% Up  24   contingency    50</span></span>
-<span><span class="co">#&gt;  8     0      0.2 50% Down-50% Up  23.3 contingency    50</span></span>
-<span><span class="co">#&gt;  9     0      0.2 25% Down-75% Up  25   contingency    50</span></span>
-<span><span class="co">#&gt; 10     0      0.2 100% Up          22.7 contingency    50</span></span>
-<span><span class="co">#&gt; # i 2,090 more rows</span></span></code></pre><p></p></div>
+<span><span class="co">#&gt;  1     0     0.05 100% Down        23.0 contingency    50</span></span>
+<span><span class="co">#&gt;  2     0     0.05 75% Down-25% Up  23.8 contingency    50</span></span>
+<span><span class="co">#&gt;  3     0     0.05 50% Down-50% Up  22.7 contingency    50</span></span>
+<span><span class="co">#&gt;  4     0     0.05 25% Down-75% Up  24.0 contingency    50</span></span>
+<span><span class="co">#&gt;  5     0     0.05 100% Up          24.4 contingency    50</span></span>
+<span><span class="co">#&gt;  6     0     0.1  100% Down        23.1 contingency    50</span></span>
+<span><span class="co">#&gt;  7     0     0.1  75% Down-25% Up  23.9 contingency    50</span></span>
+<span><span class="co">#&gt;  8     0     0.1  50% Down-50% Up  22.8 contingency    50</span></span>
+<span><span class="co">#&gt;  9     0     0.1  25% Down-75% Up  23.8 contingency    50</span></span>
+<span><span class="co">#&gt; 10     0     0.1  100% Up          24.2 contingency    50</span></span>
+<span><span class="co">#&gt; # i 8,190 more rows</span></span></code></pre><p></p></div>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
