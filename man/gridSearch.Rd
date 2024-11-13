@@ -10,9 +10,7 @@ gridSearch(
   tname,
   pname,
   pattern = c("contingency", "slopes"),
-  step1 = 1,
-  step2 = 30,
-  step3 = 500,
+  steps = 1,
   reliability = 0.9,
   seed = 11235,
   workers = 8
@@ -29,11 +27,7 @@ gridSearch(
 
 \item{pattern}{If \code{pattern = contingency}, the calculations are based on the use of a contingency table of panel patterns; if \code{pattern = slopes}, function uses individual slope coefficients.}
 
-\item{step1}{The number of simulated datasets in Step 1.}
-
-\item{step2}{The number of simulated datasets in Step 2.}
-
-\item{step3}{The number of simulated datasets in Step 3.}
+\item{steps}{The number of simulated datasets.}
 
 \item{reliability}{The assumed reliability score of the outcome measurement.}
 
@@ -50,7 +44,7 @@ This function uses a three-step grid search algorithm to calculate the extent to
 \section{Examples}{
 \strong{Basic \code{\link[=gridSearch]{gridSearch()}} call:}
 
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{set.seed(11235)
+\if{html}{\out{<div class="sourceCode r">}}\preformatted{set.seed(1871)
 data <- buildDGP(n = 50,
                  t = 3,
                  rate = 0.5,
@@ -66,9 +60,7 @@ gridSearch(data = data,
            tname = 't',
            pname = 'pid',
            pattern = 'contingency',
-           step1 = 1,
-           step2 = 2,
-           step3 = 3,
+           steps = 1,
            reliability = 0.9,
            seed = 11234,
            workers = 10)
@@ -81,20 +73,20 @@ gridSearch(data = data,
 #>  Step 2 for grid search...
 #> 
 #>  Step 3 for grid search...
-#> # A tibble: 2,100 x 6
+#> # A tibble: 8,200 x 6
 #>     rate strength direction       error pattern         n
 #>    <dbl>    <dbl> <fct>           <dbl> <chr>       <int>
-#>  1     0      0.1 100\% Down        22   contingency    50
-#>  2     0      0.1 75\% Down-25\% Up  24   contingency    50
-#>  3     0      0.1 50\% Down-50\% Up  23   contingency    50
-#>  4     0      0.1 25\% Down-75\% Up  26.5 contingency    50
-#>  5     0      0.1 100\% Up          22.5 contingency    50
-#>  6     0      0.2 100\% Down        22   contingency    50
-#>  7     0      0.2 75\% Down-25\% Up  24   contingency    50
-#>  8     0      0.2 50\% Down-50\% Up  23.3 contingency    50
-#>  9     0      0.2 25\% Down-75\% Up  25   contingency    50
-#> 10     0      0.2 100\% Up          22.7 contingency    50
-#> # i 2,090 more rows
+#>  1     0     0.05 100\% Down        23.0 contingency    50
+#>  2     0     0.05 75\% Down-25\% Up  23.8 contingency    50
+#>  3     0     0.05 50\% Down-50\% Up  22.7 contingency    50
+#>  4     0     0.05 25\% Down-75\% Up  24.0 contingency    50
+#>  5     0     0.05 100\% Up          24.4 contingency    50
+#>  6     0     0.1  100\% Down        23.1 contingency    50
+#>  7     0     0.1  75\% Down-25\% Up  23.9 contingency    50
+#>  8     0     0.1  50\% Down-50\% Up  22.8 contingency    50
+#>  9     0     0.1  25\% Down-75\% Up  23.8 contingency    50
+#> 10     0     0.1  100\% Up          24.2 contingency    50
+#> # i 8,190 more rows
 }\if{html}{\out{</div>}}
 }
 

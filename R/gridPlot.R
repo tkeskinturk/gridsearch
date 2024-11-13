@@ -72,14 +72,14 @@ gridPlot <-
     ## plot
     plot <- data |>
       ggplot2::ggplot(ggplot2::aes(x = .data$rate, y = .data$strength)) +
-      ggplot2::scale_x_continuous(limits = c(0, 1),
-                                  labels = scales::label_percent()) +
-      ggplot2::scale_y_continuous(limits = c(0, 2),
-                                  labels = scales::pretty_breaks()) +
+      ggplot2::scale_x_continuous(labels = scales::label_percent()) +
+      ggplot2::scale_y_continuous(labels = scales::pretty_breaks()) +
       ggplot2::labs(x = "Rate of Change", y = "Strength of Change") +
-      hrbrthemes::theme_ipsum_rc(grid = "XY") +
-      ggplot2::geom_point(ggplot2::aes(color = .data$group), size = 2) +
-      ggplot2::scale_color_manual(
+      hrbrthemes::theme_ipsum_rc(grid = "none") +
+      ggplot2::geom_tile(ggplot2::aes(fill = .data$group),
+                         color = "black",
+                         size = 0.01) +
+      ggplot2::scale_fill_manual(
         values = c("#000000", "#777777", "#eeeeee", "transparent"), drop = FALSE
         ) +
       ggplot2::theme(legend.position = "none")
