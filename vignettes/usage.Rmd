@@ -65,7 +65,7 @@ We noted that there are 1,000 individuals (`n`) observed 3 times (`t`). These in
 
 ```{r}
 ggplot(d$data, aes(x = y_true)) +
-  geom_histogram(bins = 50) +
+  geom_histogram(bins = 30) +
   theme_bw() +
   labs(x = "Latent Position", y = "")
 ```
@@ -81,7 +81,7 @@ Another way to look into this is to randomly pick some individuals and see their
 ```{r}
 d$data |>
   filter(pid %in% c(sample(1:1000, size = 9))) |>
-  ggplot(aes(x = t, y = y_true, group = 1)) +
+  ggplot(aes(x = factor(t), y = y_true, group = 1)) +
   geom_line() +
   facet_wrap( ~ pid) +
   theme_bw()
@@ -165,6 +165,7 @@ grid <- gridSearch(
   pname = 'pid', ## panel identifier
   steps = 1, ## the number of simulated datasets per cell
   reliability = 0.8, ## assumed reliability score
+  workers = 4
 )
 
 print(grid)
@@ -233,7 +234,8 @@ sim <- simulateChangers(
   balance_res = 0.5,
   strength = 1,
   reliable = 0.8,
-  nrep = 500
+  nrep = 500,
+  workers = 4
 )
 
 print(sim)
@@ -262,19 +264,3 @@ We would like to flag a few issues that you need to be aware of:
 - All functions rely heavily on parallelization, with an argument `workers` that allows you to control the number of parallel workers the functions will use. We strongly suggest that the calculations are parallelized; otherwise the wait times can be long.
 
 For more details about the protocol, please see the article, *The Promises and Pitfalls of Using Panel Data to Understand Individual Belief Change*, stored in [SocArXiv](https://osf.io/preprints/socarxiv/rhf4q).
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
