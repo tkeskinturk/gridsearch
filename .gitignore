@@ -8,3 +8,4 @@
 .Rproj.user
 .httr-oauth
 docs
+inst/doc

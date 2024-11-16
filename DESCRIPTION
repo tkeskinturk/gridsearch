@@ -26,7 +26,10 @@ Imports:
     tidyr,
     textshape
 Suggests: 
+    knitr,
+    rmarkdown,
     testthat (>= 3.0.0)
 BugReports: https://github.com/tkeskinturk/gridsearch/issues
 Config/testthat/edition: 3
 URL: https://tkeskinturk.github.io/gridsearch/
+VignetteBuilder: knitr

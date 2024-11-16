@@ -52,7 +52,7 @@ gridPlot <-
       dplyr::mutate(group = factor(.data$group, levels = lvls))
 
     ## check the raw values
-    if (data$pattern == "contingency" & data |>
+    if (unique(data$pattern) == "contingency" & data |>
         dplyr::mutate(error = (.data$error / .data$n) / 2) |>
         dplyr::pull(.data$error) |>
         min() > 0.10) {
@@ -60,7 +60,7 @@ gridPlot <-
         "\n Warning: DGPs are not very close to the observed values.\n Tread carefully."
       )
     }
-    if (data$pattern == "slopes" & data |>
+    if (unique(data$pattern) == "slopes" & data |>
         dplyr::pull(.data$error) |>
         min() > 0.10) {
       message(
