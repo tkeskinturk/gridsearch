@@ -1,0 +1,84 @@
+---
+title: "Example"
+author: "Pablo Bello"
+date: '2024-12-30'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+###--- Libraries
+library(tidyverse)
+library(hrbrthemes)
+theme_set(theme_ipsum())
+```
+
+
+```{r}
+###--- Simulate some data
+df <- buildDGP2()
+
+
+###--- Run rejection sampler
+samples <- gridSearch2(df,
+                       t = 3,
+                       caliper = .04,
+                       n_samples = 5000,
+                       verbose = TRUE)
+
+
+###--- With slopes and ks distance
+samples_ks <- gridSearch2(df,
+                          t = 3,
+                          caliper = .04,
+                          n_samples = 5000,
+                          verbose = TRUE, slopes = TRUE, ks =  TRUE)
+```
+
+
+```{r}
+###--- Plots
+
+###--- Compute sample means
+means <-
+  samples |>
+  colMeans() |>
+  as_tibble(rownames = "param")
+
+
+###--- Posterior Summary
+samples |>
+  pivot_longer(cols = everything(), names_to = "param") |>
+  ggplot(aes(value)) +
+  geom_density() +
+  geom_vline(data = means, aes(xintercept = value), color = "blue") +
+  facet_wrap(~ param, scales = "free") +
+  labs(title = "Posterior Density",
+       x = "Parameter Value",
+       y = "Density")
+```
+
+
+```{r}
+###--- Joint Dist
+samples |>
+  ggplot(aes(pc_sample, ic_sample)) +
+  geom_point() +
+  labs(title = "Accepted Samples")
+```
+
+
+```{r}
+###--- Conditional Posterior
+samples |>
+  mutate(balance = paste("Balance", "\U2248",round(bal_sample, 1))) |>
+  ggplot(aes(pc_sample, ic_sample)) +
+  geom_point() +
+  facet_wrap(~ balance) +
+  labs(title = "Accepted Samples")
+
+```
+
