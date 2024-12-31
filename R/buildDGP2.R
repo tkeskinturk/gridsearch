@@ -88,7 +88,7 @@ buildDGP2 <-
     new_error <- sd(mlv)
 
     # Reliability
-    mlv <- mlv * sqrt(reliable) + rnorm(n, 0, new_error) * sqrt(1 - reliable)
+    mlv <- mlv * sqrt(reliable) + rnorm(n*t, 0, new_error) * sqrt(1 - reliable)
 
     thres <- quantile(mlv, prob = 1 - balance_res)
     mt <- ifelse(mlv <= thres, 0, 1)
