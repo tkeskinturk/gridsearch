@@ -26,8 +26,6 @@ library(ggplot2)
 
 Researchers working with panel data on public opinion generally want to know the answers to two basic questions: "how many people changed?" and "how much they changed?"
 
-This often involves questions like whether people changed policy preferences within a specific time-window, or whether a substantive portion of the respondents moved their positions. 
-
 That said, longitudinal change could result from various mechanisms: large segments of the population may shift their opinions in a specific direction in small or large amounts; a small segment of the population may have large changes; or a mix of changes---including positive *and* negative movements---may alter the overall balance.
 
 The `gridsearch` is designed to give researchers a preliminary check as to what potential data generation processes may have generated their observed data.
@@ -39,27 +37,23 @@ The `gridsearch` is designed to give researchers a preliminary check as to what 
 Think about a panel study, with an underlying data-generation process (DGP). This panel study consists of 1,000 individuals observed across 3 time periods. Since this is a simulated data, we know that 50% of these 1,000 individuals *changed* their underlying latent positions within this window with 1 SD in the positive direction. However, there are reliability issues with this specific item (let's say it's measured with a reliability of 90%) and the response resolution is 2 (suppose people only say "agree" or "disagree").
 
 ```{r}
-
 # load the data
 d <- readRDS("./simulated_data.rds")
 
 # glimpse
 head(d)
-
 ```
 
 As we see, there are individuals (`pid`) observed on `y` across `t`.
 
-Over a three-wave period, we have multiple response patterns observed in our empirical data (more specifically, we have 8 potential trajectories people can walk through):
+Over a three-wave period, we have multiple response patterns observed in our empirical data or, more specifically, we have 8 potential trajectories people can walk through):
 
 ```{r}
-
 # load the patterns
 p <- readRDS("./simulated_patterns.rds")
 
 # glimpse
 print(p)
-
 ```
 
 Given this setup, how can we answer the two questions we initially posed?
@@ -74,11 +68,9 @@ The grid-search algorithm tries to answer this question. It performs six main st
    y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it} \sim \mathcal{N}(0, 1) \tag{DGP}
    $$
 
-    where we have a random variable $Y_{i}$ for true scores, with varying realizations $y_{it}$, representing a person $i$'s beliefs at time $t$; an indicator for change, $D_{it}$, operationalized as a non-reversible trigger if there is a respondent-level change in true scores; an effect size, $\delta$, and a respondent level direction multiplier $\tau_i$ that indexes whether the change is positive or negative.
-
 2) Calculates the distribution of response trajectories in both the observed and simulated data, by either tabulating response patterns across time or estimating slope coefficients;
 
-3) Compares the simulated trajectories to the observed trajectories, calculating a "distance" score to quantify the extent to which specific simulated values reproduce the observed values;
+3) Compares the simulated trajectories to the observed trajectories. It does so by calculating a "distance" score to quantify the extent to which specific simulated values reproduce the observed values;
 
 4) Rejects the simulated data if the distance measure is above a certain pre-specified "caliper" value, and accepts it otherwise;
 
@@ -99,10 +91,10 @@ grid <- gridSearch(
 )
 
 head(grid)
-
 ```
 
 The `gridSearch` function gives us a data table with four columns:
+
 - `ic_sample` shows the value of the `strength` parameter informing our DGP,
 - `pc_sample` shows the value of the `rate` parameter informing our DGP,
 - `balance` shows the extent to which our sample makes positive changes; put differently, it shows the `direction` of change in the sample,
@@ -115,17 +107,13 @@ Each row is one DGP that is "accepted" by our protocol with a given caliper valu
 We can visually inspect the parameter distributions using `gridPlot`:
 
 ```{r}
-
 gridPlot(grid, type = "posterior")
-
 ```
 
 Alternatively, we can look at the conditional accepted samples:
 
 ```{r}
-
 gridPlot(grid, type = "conditional")
-
 ```
 
 # Warnings and Notes

@@ -24,6 +24,8 @@ gridPlot <-
            type = c("posterior",
                     "conditional")) {
 
+    type = match.arg(type)
+
     ## prettify the parameters
     levels <- c("ic_sample", "pc_sample", "bal_sample", "rel_sample")
     labels <- c("Change Strength",
