@@ -35,7 +35,7 @@ gridPlot <-
     data <- as.data.frame(data)
     data <- data[, sapply(data, stats::sd) != 0]
 
-    if (type == "summary") {
+    if (type == "posterior") {
 
       data |>
         tidyr::pivot_longer(cols = tidyr::everything(), names_to = "param") |>

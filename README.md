@@ -13,7 +13,7 @@ version, `gridsearch` allows researchers to:
 - Generate simulated datasets from a given set of DGP parameters,
 - Implement a simple Approximate Bayesian Computation (ABC) algorithm to
   see what plausible combinations of parameter values may approximate to
-  the observed marginal distributions,
+  the observed data,
 - Plot posterior and conditional distributions generated from the
   grid-search algorithm.
 

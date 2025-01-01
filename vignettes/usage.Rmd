@@ -24,3 +24,115 @@ library(ggplot2)
 
 # Motivation
 
+Researchers working with panel data on public opinion generally want to know the answers to two basic questions: "how many people changed?" and "how much they changed?"
+
+This often involves questions like whether people changed policy preferences within a specific time-window, or whether a substantive portion of the respondents moved their positions. 
+
+That said, longitudinal change could result from various mechanisms: large segments of the population may shift their opinions in a specific direction in small or large amounts; a small segment of the population may have large changes; or a mix of changes---including positive *and* negative movements---may alter the overall balance.
+
+The `gridsearch` is designed to give researchers a preliminary check as to what potential data generation processes may have generated their observed data.
+
+# Illustration
+
+## Data Generation Processes
+
+Think about a panel study, with an underlying data-generation process (DGP). This panel study consists of 1,000 individuals observed across 3 time periods. Since this is a simulated data, we know that 50% of these 1,000 individuals *changed* their underlying latent positions within this window with 1 SD in the positive direction. However, there are reliability issues with this specific item (let's say it's measured with a reliability of 90%) and the response resolution is 2 (suppose people only say "agree" or "disagree").
+
+```{r}
+
+# load the data
+d <- readRDS("./simulated_data.rds")
+
+# glimpse
+head(d)
+
+```
+
+As we see, there are individuals (`pid`) observed on `y` across `t`.
+
+Over a three-wave period, we have multiple response patterns observed in our empirical data (more specifically, we have 8 potential trajectories people can walk through):
+
+```{r}
+
+# load the patterns
+p <- readRDS("./simulated_patterns.rds")
+
+# glimpse
+print(p)
+
+```
+
+Given this setup, how can we answer the two questions we initially posed?
+
+## Grid Search Algorithm
+
+The grid-search algorithm tries to answer this question. It performs six main steps:
+
+1) Simulates data with several parameters of interest for our DGPs---rate of change, strength of change, direction of change, and reliability of response measurement using
+
+   $$
+   y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it} \sim \mathcal{N}(0, 1) \tag{DGP}
+   $$
+
+    where we have a random variable $Y_{i}$ for true scores, with varying realizations $y_{it}$, representing a person $i$'s beliefs at time $t$; an indicator for change, $D_{it}$, operationalized as a non-reversible trigger if there is a respondent-level change in true scores; an effect size, $\delta$, and a respondent level direction multiplier $\tau_i$ that indexes whether the change is positive or negative.
+
+2) Calculates the distribution of response trajectories in both the observed and simulated data, by either tabulating response patterns across time or estimating slope coefficients;
+
+3) Compares the simulated trajectories to the observed trajectories, calculating a "distance" score to quantify the extent to which specific simulated values reproduce the observed values;
+
+4) Rejects the simulated data if the distance measure is above a certain pre-specified "caliper" value, and accepts it otherwise;
+
+5) Replicates this analysis $N$ times by drawing samples from the specified priors; 
+
+6) Inspects the parameter combinations that most closely approximate to the observed values.
+
+Let's apply this to our simulated dataset.
+
+```{r}
+grid <- gridSearch(
+  data = d,
+  yname = 'y', ## observed binary outcome
+  tname = 'time', ## time variable
+  pname = 'pid', ## panel identifier
+  n_samples = 1e4, ## the number of draws from the priors
+  caliper = .15 ## the distance to accept or reject specific samples
+)
+
+head(grid)
+
+```
+
+The `gridSearch` function gives us a data table with four columns:
+- `ic_sample` shows the value of the `strength` parameter informing our DGP,
+- `pc_sample` shows the value of the `rate` parameter informing our DGP,
+- `balance` shows the extent to which our sample makes positive changes; put differently, it shows the `direction` of change in the sample,
+- `rel_sample` provides a value of the reliability score retrieved from the search.
+
+Each row is one DGP that is "accepted" by our protocol with a given caliper value.
+
+## Evaluating the Potential DGPs
+
+We can visually inspect the parameter distributions using `gridPlot`:
+
+```{r}
+
+gridPlot(grid, type = "posterior")
+
+```
+
+Alternatively, we can look at the conditional accepted samples:
+
+```{r}
+
+gridPlot(grid, type = "conditional")
+
+```
+
+# Warnings and Notes
+
+We would like to flag a few issues that you need to be aware of:
+
+- Currently, `gridsearch` only accommodates binary outcomes. We are hoping to generalize these procedures to cases where we have more than 2 response categories.
+- While the `slopes` method in the `gridSearch` function may be helpful in longer panels, we note that its properties are less worked out than the default method.
+
+For more details about the protocol, please see the article, *The Promises and Pitfalls of Using Panel Data to Understand Individual Belief Change*, stored in [SocArXiv](https://osf.io/preprints/socarxiv/rhf4q).
