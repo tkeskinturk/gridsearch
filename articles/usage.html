@@ -72,8 +72,205 @@
 <div class="section level2">
 <h2 id="motivation">Motivation<a class="anchor" aria-label="anchor" href="#motivation"></a>
 </h2>
+<p>Researchers working with panel data on public opinion generally want
+to know the answers to two basic questions: “how many people changed?”
+and “how much they changed?”</p>
+<p>This often involves questions like whether people changed policy
+preferences within a specific time-window, or whether a substantive
+portion of the respondents moved their positions.</p>
+<p>That said, longitudinal change could result from various mechanisms:
+large segments of the population may shift their opinions in a specific
+direction in small or large amounts; a small segment of the population
+may have large changes; or a mix of changes—including positive
+<em>and</em> negative movements—may alter the overall balance.</p>
+<p>The <code>gridsearch</code> is designed to give researchers a
+preliminary check as to what potential data generation processes may
+have generated their observed data.</p>
 </div>
-  </main>
+<div class="section level2">
+<h2 id="illustration">Illustration<a class="anchor" aria-label="anchor" href="#illustration"></a>
+</h2>
+<div class="section level3">
+<h3 id="data-generation-processes">Data Generation Processes<a class="anchor" aria-label="anchor" href="#data-generation-processes"></a>
+</h3>
+<p>Think about a panel study, with an underlying data-generation process
+(DGP). This panel study consists of 1,000 individuals observed across 3
+time periods. Since this is a simulated data, we know that 50% of these
+1,000 individuals <em>changed</em> their underlying latent positions
+within this window with 1 SD in the positive direction. However, there
+are reliability issues with this specific item (let’s say it’s measured
+with a reliability of 90%) and the response resolution is 2 (suppose
+people only say “agree” or “disagree”).</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># load the data</span></span>
+<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"./simulated_data.rds"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># glimpse</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 3</span></span></span>
+<span><span class="co">#&gt;     pid  time     y</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1     1     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1     2     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1     3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     2     1     0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     2     2     0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     2     3     0</span></span></code></pre></div>
+<p>As we see, there are individuals (<code>pid</code>) observed on
+<code>y</code> across <code>t</code>.</p>
+<p>Over a three-wave period, we have multiple response patterns observed
+in our empirical data (more specifically, we have 8 potential
+trajectories people can walk through):</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="co"># load the patterns</span></span>
+<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"./simulated_patterns.rds"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># glimpse</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   Time 1 Time 2 Time 3 Percentage</span></span>
+<span><span class="co">#&gt; 1      1      1      1      0.340</span></span>
+<span><span class="co">#&gt; 2      0      0      0      0.338</span></span>
+<span><span class="co">#&gt; 3      0      0      1      0.110</span></span>
+<span><span class="co">#&gt; 4      1      1      0      0.017</span></span>
+<span><span class="co">#&gt; 5      0      1      1      0.110</span></span>
+<span><span class="co">#&gt; 6      0      1      0      0.039</span></span>
+<span><span class="co">#&gt; 7      1      0      1      0.031</span></span>
+<span><span class="co">#&gt; 8      1      0      0      0.015</span></span></code></pre></div>
+<p>Given this setup, how can we answer the two questions we initially
+posed?</p>
+</div>
+<div class="section level3">
+<h3 id="grid-search-algorithm">Grid Search Algorithm<a class="anchor" aria-label="anchor" href="#grid-search-algorithm"></a>
+</h3>
+<p>The grid-search algorithm tries to answer this question. It performs
+six main steps:</p>
+<ol style="list-style-type: decimal">
+<li>
+<p>Simulates data with several parameters of interest for our
+DGPs—rate of change, strength of change, direction of change, and
+reliability of response measurement using</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mo>=</mo><msub><mi>Y</mi><mi>i</mi></msub><mo>+</mo><mi>δ</mi><msub><mi>τ</mi><mi>i</mi></msub><msub><mi>D</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mo>+</mo><msub><mi>ϵ</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mspace width="0.222em"></mspace><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> with </mtext><mspace width="0.333em"></mspace></mrow><msub><mi>ϵ</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mo>∼</mo><mi>𝒩</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
+y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it} \sim \mathcal{N}(0, 1) \tag{DGP}
+</annotation></semantics></math></p>
+<p>where we have a random variable
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Y</mi><mi>i</mi></msub><annotation encoding="application/x-tex">Y_{i}</annotation></semantics></math>
+for true scores, with varying realizations
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>y</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">y_{it}</annotation></semantics></math>,
+representing a person
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>’s
+beliefs at time
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>;
+an indicator for change,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>D</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">D_{it}</annotation></semantics></math>,
+operationalized as a non-reversible trigger if there is a
+respondent-level change in true scores; an effect size,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>δ</mi><annotation encoding="application/x-tex">\delta</annotation></semantics></math>,
+and a respondent level direction multiplier
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>τ</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\tau_i</annotation></semantics></math>
+that indexes whether the change is positive or negative.</p>
+</li>
+<li><p>Calculates the distribution of response trajectories in both the
+observed and simulated data, by either tabulating response patterns
+across time or estimating slope coefficients;</p></li>
+<li><p>Compares the simulated trajectories to the observed trajectories,
+calculating a “distance” score to quantify the extent to which specific
+simulated values reproduce the observed values;</p></li>
+<li><p>Rejects the simulated data if the distance measure is above a
+certain pre-specified “caliper” value, and accepts it
+otherwise;</p></li>
+<li><p>Replicates this analysis
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>
+times by drawing samples from the specified priors;</p></li>
+<li><p>Inspects the parameter combinations that most closely approximate
+to the observed values.</p></li>
+</ol>
+<p>Let’s apply this to our simulated dataset.</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gridSearch.html">gridSearch</a></span><span class="op">(</span></span>
+<span>  data <span class="op">=</span> <span class="va">d</span>,</span>
+<span>  yname <span class="op">=</span> <span class="st">'y'</span>, <span class="co">## observed binary outcome</span></span>
+<span>  tname <span class="op">=</span> <span class="st">'time'</span>, <span class="co">## time variable</span></span>
+<span>  pname <span class="op">=</span> <span class="st">'pid'</span>, <span class="co">## panel identifier</span></span>
+<span>  n_samples <span class="op">=</span> <span class="fl">1e4</span>, <span class="co">## the number of draws from the priors</span></span>
+<span>  caliper <span class="op">=</span> <span class="fl">.15</span> <span class="co">## the distance to accept or reject specific samples</span></span>
+<span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] "10%"</span></span>
+<span><span class="co">#&gt; [1] "AR: 1.1%"</span></span>
+<span><span class="co">#&gt; [1] "20%"</span></span>
+<span><span class="co">#&gt; [1] "AR: 1.4%"</span></span>
+<span><span class="co">#&gt; [1] "30%"</span></span>
+<span><span class="co">#&gt; [1] "AR: 1.5%"</span></span>
+<span><span class="co">#&gt; [1] "40%"</span></span>
+<span><span class="co">#&gt; [1] "AR: 1.5%"</span></span>
+<span><span class="co">#&gt; [1] "50%"</span></span>
+<span><span class="co">#&gt; [1] "AR: 1.4%"</span></span>
+<span><span class="co">#&gt; [1] "60%"</span></span>
+<span><span class="co">#&gt; [1] "AR: 1.5%"</span></span>
+<span><span class="co">#&gt; [1] "70%"</span></span>
+<span><span class="co">#&gt; [1] "AR: 1.4%"</span></span>
+<span><span class="co">#&gt; [1] "80%"</span></span>
+<span><span class="co">#&gt; [1] "AR: 1.4%"</span></span>
+<span><span class="co">#&gt; [1] "90%"</span></span>
+<span><span class="co">#&gt; [1] "AR: 1.3%"</span></span>
+<span><span class="co">#&gt; [1] "100%"</span></span>
+<span><span class="co">#&gt; [1] "AR: 1.4%"</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">grid</span><span class="op">)</span></span>
+<span><span class="co">#&gt;    ic_sample pc_sample bal_sample rel_sample</span></span>
+<span><span class="co">#&gt;        &lt;num&gt;     &lt;num&gt;      &lt;num&gt;      &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: 1.0322507 0.7445152  0.9646666  0.8663515</span></span>
+<span><span class="co">#&gt; 2: 1.1328781 0.6322543  0.8840945  0.8712028</span></span>
+<span><span class="co">#&gt; 3: 0.9579910 0.4495958  0.9640791  0.8405229</span></span>
+<span><span class="co">#&gt; 4: 1.9532644 0.3531195  0.8201550  0.9198327</span></span>
+<span><span class="co">#&gt; 5: 0.7912792 0.6350539  0.9839783  0.9342152</span></span>
+<span><span class="co">#&gt; 6: 1.9839352 0.4101874  0.8015720  0.9760054</span></span></code></pre></div>
+<p>The <code>gridSearch</code> function gives us a data table with four
+columns: - <code>ic_sample</code> shows the value of the
+<code>strength</code> parameter informing our DGP, -
+<code>pc_sample</code> shows the value of the <code>rate</code>
+parameter informing our DGP, - <code>balance</code> shows the extent to
+which our sample makes positive changes; put differently, it shows the
+<code>direction</code> of change in the sample, -
+<code>rel_sample</code> provides a value of the reliability score
+retrieved from the search.</p>
+<p>Each row is one DGP that is “accepted” by our protocol with a given
+caliper value.</p>
+</div>
+<div class="section level3">
+<h3 id="evaluating-the-potential-dgps">Evaluating the Potential DGPs<a class="anchor" aria-label="anchor" href="#evaluating-the-potential-dgps"></a>
+</h3>
+<p>We can visually inspect the parameter distributions using
+<code>gridPlot</code>:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, type <span class="op">=</span> <span class="st">"posterior"</span><span class="op">)</span></span></code></pre></div>
+<p>Alternatively, we can look at the conditional accepted samples:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span></span>
+<span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, type <span class="op">=</span> <span class="st">"conditional"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="usage_files/figure-html/unnamed-chunk-6-1.png" width="90%" style="display: block; margin: auto;"></p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="warnings-and-notes">Warnings and Notes<a class="anchor" aria-label="anchor" href="#warnings-and-notes"></a>
+</h2>
+<p>We would like to flag a few issues that you need to be aware of:</p>
+<ul>
+<li>Currently, <code>gridsearch</code> only accommodates binary
+outcomes. We are hoping to generalize these procedures to cases where we
+have more than 2 response categories.</li>
+<li>While the <code>slopes</code> method in the <code>gridSearch</code>
+function may be helpful in longer panels, we note that its properties
+are less worked out than the default method.</li>
+</ul>
+<p>For more details about the protocol, please see the article, <em>The
+Promises and Pitfalls of Using Panel Data to Understand Individual
+Belief Change</em>, stored in <a href="https://osf.io/preprints/socarxiv/rhf4q" class="external-link">SocArXiv</a>.</p>
+</div>
+  </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
+    </nav></aside>
 </div>
 
 
