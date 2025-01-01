@@ -14,11 +14,11 @@
 <link rel="apple-touch-icon" type="image/png" sizes="60x60" href="apple-touch-icon-60x60.png">
 <script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
-<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.4.2/css/all.min.css" rel="stylesheet">
-<link href="deps/font-awesome-6.4.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Performs Grid Search for Individual Change in Panel Data">
-<meta name="description" content="Provides convenience functions to perform fake-data simulations using panel data to assess the plausibility of competing data generation processes for panel change.">
-<meta property="og:description" content="Provides convenience functions to perform fake-data simulations using panel data to assess the plausibility of competing data generation processes for panel change.">
+<meta name="description" content="Provides convenience functions to perform Approximate Bayesian Computation using panel data to assess the plausibility of competing data generation processes for panel change.">
+<meta property="og:description" content="Provides convenience functions to perform Approximate Bayesian Computation using panel data to assess the plausibility of competing data generation processes for panel change.">
 <meta property="og:image" content="https://tkeskinturk.github.io/gridsearch/logo.png">
 </head>
 <body>
@@ -68,9 +68,8 @@
 <p><code>gridsearch</code> is an R package used for adjudicating plausible data generation processes (DGP) for a given panel dataset. In its current version, <code>gridsearch</code> allows researchers to:</p>
 <ul>
 <li>Generate simulated datasets from a given set of DGP parameters,</li>
-<li>Implement a simple grid-search algorithm to see what plausible combinations of parameter values may approximate to the observed marginal distributions,</li>
-<li>Plot distance values generated from the grid-search algorithm,</li>
-<li>Generate simple simulations for calculating classification accuracy measures to see whether, for a given DGP, we can identify individual changers with a certain level of accuracy.</li>
+<li>Implement a simple Approximate Bayesian Computation algorithm to see what plausible combinations of parameter values may approximate to the observed marginal distributions,</li>
+<li>Plot posterior and conditional distributions generated from the grid-search algorithm.</li>
 </ul>
 <p>This package is a companion to the article, <em>The Promises and Pitfalls of Using Panel Data to Understand Individual Belief Change</em>, stored in <a href="https://osf.io/preprints/socarxiv/rhf4q" class="external-link">SocArXiv</a>.</p>
 <div class="section level2">
@@ -110,6 +109,7 @@
 <h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
 <li>Turgut Keskintürk <br><small class="roles"> Author, maintainer </small>  </li>
+<li>Pablo Bello <br><small class="roles"> Author </small>  </li>
 <li>Stephen Vaisey <br><small class="roles"> Author </small>  </li>
 </ul>
 </div>
@@ -121,7 +121,7 @@
 
 
     <footer><div class="pkgdown-footer-left">
-  <p>Developed by Turgut Keskintürk, Stephen Vaisey.</p>
+  <p>Developed by Turgut Keskintürk, Pablo Bello, Stephen Vaisey.</p>
 </div>
 
 <div class="pkgdown-footer-right">
