@@ -107,13 +107,13 @@ Each row is one DGP that is "accepted" by our protocol with a given caliper valu
 We can visually inspect the parameter distributions using `gridPlot`:
 
 ```{r}
-gridPlot(grid, type = "posterior")
+gridPlot(grid, plot = "posterior")
 ```
 
 Alternatively, we can look at the conditional accepted samples:
 
 ```{r}
-gridPlot(grid, type = "conditional")
+gridPlot(grid, plot = "conditional")
 ```
 
 # Warnings and Notes

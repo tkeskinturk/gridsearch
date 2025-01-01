@@ -22,7 +22,6 @@ gridSearch(
   fix = "none",
   fix_at = 1,
   slopes = FALSE,
-  ks = FALSE,
   verbose = TRUE
 )
 }
@@ -60,8 +59,6 @@ gridSearch(
 \item{fix_at}{At what value to fix it on?}
 
 \item{slopes}{Whether to use \code{slopes} rather than \verb{contingency table}.}
-
-\item{ks}{Whether to use Kolmogorov-Smirnov distance rather than normalized distance.}
 
 \item{verbose}{Whether to see detailed messages.}
 }

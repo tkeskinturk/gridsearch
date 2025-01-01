@@ -29,7 +29,6 @@
 #' @param fix Fix any parameter? (values: "ic_sample," "pc_sample," etc.).
 #' @param fix_at At what value to fix it on?
 #' @param slopes Whether to use `slopes` rather than `contingency table`.
-#' @param ks Whether to use Kolmogorov-Smirnov distance rather than normalized distance.
 #' @param verbose Whether to see detailed messages.
 #' @return A data frame.
 #'
@@ -61,7 +60,6 @@ gridSearch <-
     fix = "none",
     fix_at = 1,
     slopes = FALSE,
-    ks = FALSE,
     verbose = TRUE
 
     ) {
@@ -171,7 +169,7 @@ gridSearch <-
       res[is.na(res)] <- 0
 
       ### --- ks test
-      if (ks == TRUE & slopes == TRUE) {
+      if (slopes == TRUE) {
 
         ks <- suppressWarnings(stats::ks.test(
           x = rep(res$estimate, res$N * 100),
