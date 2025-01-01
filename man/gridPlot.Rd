@@ -2,7 +2,7 @@
 % Please edit documentation in R/gridPlot.R
 \name{gridPlot}
 \alias{gridPlot}
-\title{Plot DGP Grids}
+\title{Plot DGP Parameters}
 \usage{
 gridPlot(data, type = c("posterior", "conditional"))
 }
@@ -15,5 +15,5 @@ gridPlot(data, type = c("posterior", "conditional"))
 A \code{ggplot2} object.
 }
 \description{
-This function plots the distribution of accepted samples resulting from \code{gridSearch}.
+This function plots the distribution of accepted samples.
 }

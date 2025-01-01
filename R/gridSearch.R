@@ -18,10 +18,10 @@
 #' @param pname The unit identifier.
 #' @param n_samples The number of samples from priors.
 #' @param caliper A caliper value.
-#' @param ic_min Minimum IC parameter.
-#' @param ic_max Maximum IC parameter.
-#' @param pc_min Minimum PC parameter.
-#' @param pc_max Maximum PC parameter.
+#' @param ic_min Minimum strength of change parameter.
+#' @param ic_max Maximum strength of change parameter.
+#' @param pc_min Minimum rate of change parameter.
+#' @param pc_max Maximum rate of change parameter.
 #' @param bal_min Minimum balance parameter.
 #' @param bal_max Maximum balance parameter.
 #' @param rel_min Minimum reliability parameter.

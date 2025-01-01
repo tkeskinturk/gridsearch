@@ -11,14 +11,14 @@ generation processes (DGP) for a given panel dataset. In its current
 version, `gridsearch` allows researchers to:
 
 - Generate simulated datasets from a given set of DGP parameters,
-- Implement a simple Approximate Bayesian Computation algorithm to see
-  what plausible combinations of parameter values may approximate to the
-  observed marginal distributions,
+- Implement a simple Approximate Bayesian Computation (ABC) algorithm to
+  see what plausible combinations of parameter values may approximate to
+  the observed marginal distributions,
 - Plot posterior and conditional distributions generated from the
   grid-search algorithm.
 
-This package is a companion to the article, *The Promises and Pitfalls
-of Using Panel Data to Understand Individual Belief Change*, stored in
+This package is a companion to the article, “The Promises and Pitfalls
+of Using Panel Data to Understand Individual Belief Change,” stored in
 [SocArXiv](https://osf.io/preprints/socarxiv/rhf4q).
 
 ## Installation

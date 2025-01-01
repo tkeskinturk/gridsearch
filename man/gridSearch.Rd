@@ -39,13 +39,13 @@ gridSearch(
 
 \item{caliper}{A caliper value.}
 
-\item{ic_min}{Minimum IC parameter.}
+\item{ic_min}{Minimum strength of change parameter.}
 
-\item{ic_max}{Maximum IC parameter.}
+\item{ic_max}{Maximum strength of change parameter.}
 
-\item{pc_min}{Minimum PC parameter.}
+\item{pc_min}{Minimum rate of change parameter.}
 
-\item{pc_max}{Maximum PC parameter.}
+\item{pc_max}{Maximum rate of change parameter.}
 
 \item{bal_min}{Minimum balance parameter.}
 
