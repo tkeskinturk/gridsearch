@@ -9,15 +9,25 @@ gridSearch(
   yname,
   tname,
   pname,
-  pattern = c("contingency", "slopes"),
-  steps = 1,
-  reliability = 0.9,
-  seed = 11235,
-  workers = 8
+  n_samples = 1000,
+  caliper = 0.1,
+  ic_min = 0,
+  ic_max = 2,
+  pc_min = 0,
+  pc_max = 1,
+  bal_min = 0,
+  bal_max = 1,
+  rel_min = 0,
+  rel_max = 1,
+  fix = "none",
+  fix_at = 1,
+  slopes = FALSE,
+  ks = FALSE,
+  verbose = TRUE
 )
 }
 \arguments{
-\item{data}{A dataframe.}
+\item{data}{A panel dataframe in the long format.}
 
 \item{yname}{The outcome identifier.}
 
@@ -25,68 +35,39 @@ gridSearch(
 
 \item{pname}{The unit identifier.}
 
-\item{pattern}{If \code{pattern = contingency}, the calculations are based on the use of a contingency table of panel patterns; if \code{pattern = slopes}, function uses individual slope coefficients.}
+\item{n_samples}{The number of samples from priors.}
 
-\item{steps}{The number of simulated datasets.}
+\item{caliper}{A caliper value.}
 
-\item{reliability}{The assumed reliability score of the outcome measurement.}
+\item{ic_min}{Minimum IC parameter.}
 
-\item{seed}{Seed for reproducibility.}
+\item{ic_max}{Maximum IC parameter.}
 
-\item{workers}{The number of workers for parallelization (note that parallelization is highly recommended for reasonable duration).}
+\item{pc_min}{Minimum PC parameter.}
+
+\item{pc_max}{Maximum PC parameter.}
+
+\item{bal_min}{Minimum balance parameter.}
+
+\item{bal_max}{Maximum balance parameter.}
+
+\item{rel_min}{Minimum reliability parameter.}
+
+\item{rel_max}{Maximum reliability parameter.}
+
+\item{fix}{Fix any parameter? (values: "ic_sample," "pc_sample," etc.).}
+
+\item{fix_at}{At what value to fix it on?}
+
+\item{slopes}{Whether to use \code{slopes} rather than \verb{contingency table}.}
+
+\item{ks}{Whether to use Kolmogorov-Smirnov distance rather than normalized distance.}
+
+\item{verbose}{Whether to see detailed messages.}
 }
 \value{
 A data frame.
 }
 \description{
-This function uses a three-step grid search algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements fake-data simulations from a grid of plausible values---rate of change ranging from 0\% to 100\%, strength of change ranging from 0 SD to 2 SD, and 5 directional cases (everyone changing negatively, everyone changing positively, half changing negatively and half changing positively, 25\% changing negatively and 75\% changing positively, and 75\% changing negatively and 25\% changing positively), calculates the distribution of response patterns or slopes, and provides an error term that summarizes the distance of the DGP from the observed values.
+This function uses an Approximate Bayesian Computation (ABC) algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements simulations across plausible values---rate of change, strength of change, directionality, and reliability---and provides a list of accepted samples from this procedure.
 }
-\section{Examples}{
-\strong{Basic \code{\link[=gridSearch]{gridSearch()}} call:}
-
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{set.seed(1871)
-data <- buildDGP(n = 50,
-                 t = 3,
-                 rate = 0.5,
-                 balance_dir = 1,
-                 balance_res = 0.5,
-                 strength = 1,
-                 reliable = 0.9,
-                 export = TRUE,
-                 patterns = FALSE,
-                 slopes = FALSE)
-gridSearch(data = data,
-           yname = 'y_obs',
-           tname = 't',
-           pname = 'pid',
-           pattern = 'contingency',
-           steps = 1,
-           reliability = 0.9,
-           seed = 11234,
-           workers = 10)
-#> This function drops missing values. Tread carefully.
-#> 
-#>  We now start the calculations. There will be 3 steps.
-#> 
-#>  Step 1 for grid search...
-#> 
-#>  Step 2 for grid search...
-#> 
-#>  Step 3 for grid search...
-#> # A tibble: 8,200 x 6
-#>     rate strength direction       error pattern         n
-#>    <dbl>    <dbl> <fct>           <dbl> <chr>       <int>
-#>  1     0     0.05 100\% Down        23.0 contingency    50
-#>  2     0     0.05 75\% Down-25\% Up  23.8 contingency    50
-#>  3     0     0.05 50\% Down-50\% Up  22.7 contingency    50
-#>  4     0     0.05 25\% Down-75\% Up  24.0 contingency    50
-#>  5     0     0.05 100\% Up          24.4 contingency    50
-#>  6     0     0.1  100\% Down        23.1 contingency    50
-#>  7     0     0.1  75\% Down-25\% Up  23.9 contingency    50
-#>  8     0     0.1  50\% Down-50\% Up  22.8 contingency    50
-#>  9     0     0.1  25\% Down-75\% Up  23.8 contingency    50
-#> 10     0     0.1  100\% Up          24.2 contingency    50
-#> # i 8,190 more rows
-}\if{html}{\out{</div>}}
-}
-

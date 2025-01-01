@@ -3,52 +3,35 @@
 # - function: grid search ---------------------------------------------------- #
 
 ### note: this function
-###       (a) takes a panel dataframe (with `pid`, `t`, and `y`),
-###       (b) iteratively prune to recover best DGPs,
-###       (c) calculates error by measuring pattern distance from the DGPs.
+###       (a) takes a panel dataframe and processes it,
+###       (b) performs an ABC grid search via tabulated response patterns/slopes,
+###       (c) returns accepted samples for IC, PC, BAL & REL from the search.
 
 # FUNCTION CALL -------------------------------------------------------------- #
 
 #' Grid Search for Adjudicating DGPs
 #'
-#' This function uses a three-step grid search algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements fake-data simulations from a grid of plausible values---rate of change ranging from 0% to 100%, strength of change ranging from 0 SD to 2 SD, and 5 directional cases (everyone changing negatively, everyone changing positively, half changing negatively and half changing positively, 25% changing negatively and 75% changing positively, and 75% changing negatively and 25% changing positively), calculates the distribution of response patterns or slopes, and provides an error term that summarizes the distance of the DGP from the observed values.
-#' @param data A dataframe.
+#' This function uses an Approximate Bayesian Computation (ABC) algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements simulations across plausible values---rate of change, strength of change, directionality, and reliability---and provides a list of accepted samples from this procedure.
+#' @param data A panel dataframe in the long format.
 #' @param yname The outcome identifier.
 #' @param tname The time identifier.
 #' @param pname The unit identifier.
-#' @param pattern If `pattern = contingency`, the calculations are based on the use of a contingency table of panel patterns; if `pattern = slopes`, function uses individual slope coefficients.
-#' @param steps The number of simulated datasets.
-#' @param reliability The assumed reliability score of the outcome measurement.
-#' @param seed Seed for reproducibility.
-#' @param workers The number of workers for parallelization (note that parallelization is highly recommended for reasonable duration).
-#'
+#' @param n_samples The number of samples from priors.
+#' @param caliper A caliper value.
+#' @param ic_min Minimum IC parameter.
+#' @param ic_max Maximum IC parameter.
+#' @param pc_min Minimum PC parameter.
+#' @param pc_max Maximum PC parameter.
+#' @param bal_min Minimum balance parameter.
+#' @param bal_max Maximum balance parameter.
+#' @param rel_min Minimum reliability parameter.
+#' @param rel_max Maximum reliability parameter.
+#' @param fix Fix any parameter? (values: "ic_sample," "pc_sample," etc.).
+#' @param fix_at At what value to fix it on?
+#' @param slopes Whether to use `slopes` rather than `contingency table`.
+#' @param ks Whether to use Kolmogorov-Smirnov distance rather than normalized distance.
+#' @param verbose Whether to see detailed messages.
 #' @return A data frame.
-#'
-#' @details # Examples
-#'
-#' **Basic [gridSearch()] call:**
-#' ```{r, comment = "#>", collapse = TRUE}
-#' set.seed(1871)
-#' data <- buildDGP(n = 50,
-#'                  t = 3,
-#'                  rate = 0.5,
-#'                  balance_dir = 1,
-#'                  balance_res = 0.5,
-#'                  strength = 1,
-#'                  reliable = 0.9,
-#'                  export = TRUE,
-#'                  patterns = FALSE,
-#'                  slopes = FALSE)
-#' gridSearch(data = data,
-#'            yname = 'y_obs',
-#'            tname = 't',
-#'            pname = 'pid',
-#'            pattern = 'contingency',
-#'            steps = 1,
-#'            reliability = 0.9,
-#'            seed = 11234,
-#'            workers = 10)
-#' ```
 #'
 #' @export
 #'
@@ -61,359 +44,163 @@ gridSearch <-
     # FUNCTION ARGUMENTS AND WARNINGS                       #
     # ----------------------------------------------------- #
 
-    # dataframe
     data,
-    # outcome variable
     yname,
-    # time variable
     tname,
-    # person identifier
     pname,
-    # pattern match
-    pattern = c("contingency", "slopes"),
-    # simulation runs
-    steps = 1,
-    # reliability
-    reliability = 0.9,
-    # seed
-    seed = 11235,
-    # the number of workers
-    workers = 8
+    n_samples = 1000,
+    caliper = .1,
+    ic_min = 0,
+    ic_max = 2,
+    pc_min = 0,
+    pc_max = 1,
+    bal_min = 0,
+    bal_max = 1,
+    rel_min = 0,
+    rel_max = 1,
+    fix = "none",
+    fix_at = 1,
+    slopes = FALSE,
+    ks = FALSE,
+    verbose = TRUE
 
-  ) {
-
-    # --- dataframe
-
-    df <- data |>
-      dplyr::select(
-        # get person identifier
-        pid = dplyr::all_of(pname),
-        # get time identifier
-        t = dplyr::all_of(tname),
-        # get outcome identifier
-        y  = dplyr::all_of(yname)) |>
-      dplyr::mutate(t = scales::rescale(.data$t)) |>
-      tidyr::drop_na()
-
-    # --- messages!
-
-    message("This function drops missing values. Tread carefully.")
-
-    if(
-      sort(unique(df$y))[1] == 0 &
-      sort(unique(df$y))[2] == 1 &
-      length(unique(df$y)) == 2) {
-    } else{
-      stop("Error: The outcome needs to be binary and coded as 0 and 1.")
-    }
-    if(length(unique(df$t)) <= 1) {
-      stop("Error: There needs to be at least two time periods.")
-    }
-
-    pattern = match.arg(pattern)
+    ) {
 
     # ----------------------------------------------------- #
-    # BUILDING BLOCKS                                       #
+    # DATA PROCESSING                                       #
     # ----------------------------------------------------- #
 
-    # --- part 1: parallelize
+    data <- data.table::as.data.table(data)
 
-    set.seed(seed)
-    future::plan(future::multisession, workers = workers)
+    # use the column names provided in the function arguments
+    data$y <- data[[yname]] # access the column for `yname`
+    data$t <- data[[tname]] # access the column for `tname`
+    data$p <- data[[pname]] # access the column for `pname`
 
-    # --- part 2: prepare the reference
+    # subset the relevant columns
+    data <- data[, .SD, .SDcols = c("y", "t", "p")]
 
-    if (pattern == "contingency") {
-
-      rf <- df |>
-        tidyr::pivot_wider(names_from = "t", values_from = "y") |>
-        tidyr::unite("patterns", -tidyr::starts_with("pid"), sep = "") |>
-        dplyr::summarize(reference = dplyr::n(), .by = "patterns") |>
-        dplyr::arrange(.data$patterns) ## contingency of 0s and 1s across waves
-
+    # check if the dataframe supplied is balanced
+    data <- stats::na.omit(data) ## missing
+    is_balanced <- all(table(data$p) == (table(data$p))[1])
+    if (!is_balanced) {
+      stop("Error: The panel data is not balanced.")
     }
+    b <- mean(data$y) ## the distribution of observed ys
+    p <- table(data$t)[[1]] ## the number of unique individuals
+    t <- table(data$p)[[1]] ## the number of time periods
 
-    if (pattern == "slopes") {
+    # reshape the data from long to wide format
+    data <- data.table::dcast(data, p ~ t, value.var = "y")
 
-      rf <- varyingSlopes(df,
-                          pname = "pid",
-                          tname = "t",
-                          yname = "y")
+    # rename the columns for easy handling
+    j <- paste0("V", 1:t) ## columns to join on
+    data.table::setnames(data, old = as.character(1:t), new = paste0("V", 1:t))
+    data <- data[, .N, by=j]
+    data[, "N" := .SD[["N"]] / sum(.SD[["N"]])]
 
-    }
+    # ----------------------------------------------------- #
+    # PREPARATIONS                                          #
+    # ----------------------------------------------------- #
 
-    # --- part 3: fake-data grid
+    ## preps
+    ts <- j
+    accepted <- list()
+    counter <- 0
 
-    fd <- tidyr::expand_grid(
-      p_n =
-        dplyr::distinct(df, .data$pid) |> nrow(),
-      p_t =
-        dplyr::distinct(df, .data$t)   |> nrow(),
-      p_rate =
-        round(seq(
-          from = 0,
-          to   = 1,
-          length.out = 41
-        ), 3),
-      p_strength =
-        round(seq(
-          from = 0.05,
-          to   = 2,
-          length.out = 40
-        ), 3),
-      p_dir = c(0, 0.25, 0.50, 0.75, 1),
-      p_res = mean(df$y),
-      sim = 1:steps
-    )
-
-    # --- part 4: function for simulations
-
-    parallel_grid <- function(dat) {
-
-      if (pattern == "contingency") {
-
-        dat <- dat |>
-          dplyr::mutate(
-            data =
-              furrr::future_pmap(
-                ## mapping list
-                .l = list(.data$p_n,
-                          .data$p_t,
-                          .data$p_strength,
-                          .data$p_rate,
-                          .data$p_dir,
-                          .data$p_res),
-                ## refer to list based on index
-                .f = ~ buildDGP(
-                  # varying parameters
-                  n = ..1,
-                  t = ..2,
-                  strength = ..3,
-                  rate = ..4,
-                  balance_dir = ..5,
-                  balance_res = ..6,
-                  reliable = reliability,
-                  export = FALSE,
-                  patterns = TRUE,
-                  slopes = FALSE
-                ),
-                ## for reproducibility
-                .options = furrr::furrr_options(seed = TRUE),
-                .progress = TRUE
-              )
-          ) |>
-          ## get the distance
-          tidyr::unnest(data) |>
-          dplyr::left_join(rf, by = "patterns") |>
-          dplyr::mutate(reference = ifelse(is.na(.data$reference) == TRUE,
-                                           0,
-                                           .data$reference)) |>
-          dplyr::mutate(deviation = abs(.data$n - .data$reference)) |>
-          dplyr::summarize(
-            deviation_sum = sum(.data$deviation),
-            .by = c("p_rate", "p_strength", "p_dir", "sim")
-          )
-
-      }
-
-      if (pattern == "slopes") {
-
-        dat <- dat |>
-          dplyr::mutate(
-            data =
-              furrr::future_pmap_dbl(
-                ## mapping list
-                .l = list(.data$p_n,
-                          .data$p_t,
-                          .data$p_strength,
-                          .data$p_rate,
-                          .data$p_dir,
-                          .data$p_res),
-                ## refer to list based on index
-                .f = ~ buildDGP(
-                  # varying parameters
-                  n = ..1,
-                  t = ..2,
-                  strength = ..3,
-                  rate = ..4,
-                  balance_dir = ..5,
-                  balance_res = ..6,
-                  reliable = reliability,
-                  export = FALSE,
-                  patterns = FALSE,
-                  slopes = TRUE) |>
-                  dplyr::summarize(ks = stats::ks.test(.data$estimate,
-                                                       rf$estimate,
-                                                       exact = TRUE)$statistic) |>
-                  dplyr::pull(ks),
-                ## for reproducibility
-                .options = furrr::furrr_options(seed = TRUE),
-                .progress = TRUE
-              )
-          ) |>
-          ## get the distance
-          dplyr::summarize(
-            deviation_sum = sum(.data$data),
-            .by = c("p_rate", "p_strength", "p_dir", "sim")
-          )
-      }
-
-      return(dat)
-
+    ## slope preps
+    if (slopes == TRUE) {
+      ref <- varyingSlopes(t)
+      j <- "estimate" # column to join on
+      data <- collapse::join(data,
+                             ref,
+                             on = ts,
+                             how = "left",
+                             verbose = FALSE)
+      data <- stats::aggregate(N ~ estimate, data, sum)
     }
 
     # ----------------------------------------------------- #
-    # GRID SEARCH ALGORITHM                                 #
+    # ABC                                                   #
     # ----------------------------------------------------- #
 
-    cat("\n We now start the calculations. There will be 3 steps.")
+    for (i in 1:n_samples) {
 
-    # ----------------------------------------------------- #
+      ### --- sample from prior
+      ic_sample <- stats::runif(n = 1,
+                                min = ic_min,
+                                max = ic_max)
+      pc_sample <- stats::runif(n = 1,
+                                min = pc_min,
+                                max = pc_max)
+      bal_sample <- stats::runif(n = 1,
+                                 min = bal_min,
+                                 max = bal_max)
+      rel_sample <- stats::runif(n = 1,
+                                 min = rel_min,
+                                 max = rel_max)
+      assign(fix, fix_at)
 
-    # --- STEP 1
-
-    message("\n Step 1 for grid search...")
-
-    fd <- parallel_grid(fd)
-
-    # ----------------------------------------------------- #
-
-    # --- STEP 2
-
-    message("\n Step 2 for grid search...")
-
-    ## empty dataframe
-    fd_smoothed <-
-      tibble::tibble(
-        p_rate = double(),
-        p_strength = double(),
-        p_dir = double(),
-        error_smoothed = double(),
-        sim = double()
+      ### --- simulate the data
+      res <- buildDGP(
+        n = p,
+        t = t,
+        rate = pc_sample,
+        balance_dir = bal_sample,
+        balance_res = b,
+        strength = ic_sample,
+        reliable = rel_sample
       )
 
-    ## loop across simulations
-    for (sims in c(1:steps)) {
-      ## loop across grids
-      for (dir in c(0, 0.25, 0.5, 0.75, 1)) {
-        ## construct a matrix
-        mat <- fd |>
-          dplyr::filter(.data$sim == sims) |>
-          dplyr::filter(.data$p_dir == dir) |>
-          dplyr::select(-.data$sim, -.data$p_dir) |>
-          tidyr::pivot_wider(names_from = "p_strength", values_from = "deviation_sum") |>
-          textshape::column_to_rownames('p_rate') |>
-          as.matrix()
-
-        ## apply neighborhood smoothing
-        mat <- round(smoothMatrix(mat, n = 2), 2)
-
-        ## add strength values
-        colnames(mat) <-
-          round(seq(
-            from = 0.05,
-            to   = 2,
-            length.out = 40
-          ), 3)
-
-        ## reshape and organize the data
-        mat <- mat |>
-          tibble::as_tibble(.data) |>
-          dplyr::mutate(p_rate = round(seq(
-            from = 0,
-            to   = 1,
-            length.out = 41
-          ), 3)) |>
-          dplyr::relocate(.data$p_rate) |>
-          tidyr::pivot_longer(
-            cols = -.data$p_rate,
-            names_to = "p_strength",
-            values_to = "error_smoothed"
-          ) |>
-          dplyr::mutate(p_strength = as.numeric(.data$p_strength),
-                        p_rate     = as.numeric(.data$p_rate)) |>
-          dplyr::mutate(p_dir = dir) |>
-          dplyr::mutate(sim = sims) |>
-          dplyr::relocate(.data$p_dir, .before = "error_smoothed")
-
-        ## bind the new loop step
-        fd_smoothed <- fd_smoothed |> dplyr::bind_rows(mat)
-
+      ### --- slopes
+      if (slopes == TRUE) {
+        res <- collapse::join(res,
+                              ref,
+                              on = ts,
+                              how = "left",
+                              verbose = FALSE)
+        res <- stats::aggregate(N ~ estimate, res, sum)
       }
-    }
 
-    ## join
-    fd <- fd |>
-      dplyr::left_join(fd_smoothed, by = c("p_rate", "p_strength", "p_dir", "sim")) |>
-      dplyr::select(.data$p_rate,
-                    .data$p_strength,
-                    .data$p_dir,
-                    error = .data$error_smoothed)
-    rm(fd_smoothed, mat) # clean-up
+      ### --- compute error
+      res <- collapse::join(res,
+                            data,
+                            on = j,
+                            how = "full",
+                            verbose = FALSE)
+      res[is.na(res)] <- 0
 
-    # ----------------------------------------------------- #
+      ### --- ks test
+      if (ks == TRUE & slopes == TRUE) {
 
-    # --- STEP 3
+        ks <- suppressWarnings(stats::ks.test(
+          x = rep(res$estimate, res$N * 100),
+          y = rep(data$estimate, data$N * 100)
+        ))
+        error <- ks$statistic
+      }
 
-    message("\n Step 3 for grid search...")
+      else{
+        res$diff <- res$N - res$N_data
+        error <- sum(abs(res$diff))
+      }
 
-    fd <- fd |>
-      dplyr::mutate(p_dir = as.factor(.data$p_dir)) # for interactions
-
-    ## model
-    m <- mgcv::gam(
-      error ~ p_dir + te(p_rate, p_strength, by = p_dir), data = fd)
-
-    # predict
-    fd$pred <- as.vector(mgcv::predict.gam(m))
-    fd <- fd |>
-      dplyr::summarize(error = mean(.data$pred),
-                       .by = c("p_rate", "p_strength", "p_dir"))
-
-    # ----------------------------------------------------- #
-    # EXPORT                                                #
-    # ----------------------------------------------------- #
-
-    fd <- fd |>
-      ## cleanup
-      dplyr::mutate(p_dir = factor(
-        .data$p_dir,
-        levels = c(0, 0.25, 0.5, 0.75, 1),
-        labels = c(
-          "100% Down",
-          "75% Down-25% Up",
-          "50% Down-50% Up",
-          "25% Down-75% Up",
-          "100% Up"
-        )
-      )) |>
-      ## selection
-      dplyr::select(
-        rate = "p_rate",
-        strength = "p_strength",
-        direction = "p_dir",
-        "error"
-      )
-
-    if (pattern == "contingency") {
-
-      fd <- fd |>
-        dplyr::mutate(pattern = "contingency") |>
-        dplyr::mutate(n = df |> dplyr::distinct(.data$pid) |> nrow())
-
-      return(fd)
+      ### --- accept/reject
+      if (error < caliper) {
+        accepted[[i]] <-
+          data.table::data.table(ic_sample, pc_sample, bal_sample, rel_sample)
+        counter <- counter + 1
+      }
+      if (i %% 1000 == 0 && verbose == TRUE) {
+        print(paste0(round(i / n_samples * 100, 1), "%"))
+        print(paste0("AR: ", round(counter / i * 100, 1), "%"))
+      }
 
     }
 
-    if (pattern == "slopes") {
+    accepted <- data.table::rbindlist(accepted)
 
-      fd <- fd |>
-        dplyr::mutate(pattern = "slopes") |>
-        dplyr::mutate(n = df |> dplyr::distinct(.data$pid) |> nrow())
-
-      return(fd)
-
-    }
+    return(accepted)
 
   }
 

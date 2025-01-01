@@ -3,28 +3,20 @@ Title: Performs Grid Search for Individual Change in Panel Data
 Version: 0.1.0
 Authors@R: c(
     person("Turgut", "Keskintürk", , "turgut.keskinturk@duke.edu", role = c("aut", "cre")),
+    person("Pablo", "Bello", , "pablo.bello@duke.edu", role = c("aut")),
     person("Stephen", "Vaisey", , "stephen.vaisey@duke.edu", role = c("aut")))
-Description: Provides convenience functions to perform fake-data simulations using panel data to assess the plausibility of competing data generation processes for panel change.
+Description: Provides convenience functions to perform Approximate Bayesian Computation using panel data to assess the plausibility of competing data generation processes for panel change.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.3.2
-Imports: 
+Imports:
+    collapse,
     data.table,
     dplyr,
-    fastglm,
-    furrr,
-    future,
-    ggh4x,
     ggplot2,
-    hrbrthemes,
-    mgcv,
-    purrr,
     rlang,
-    scales,
-    tibble,
-    tidyr,
-    textshape
+    tidyr
 Suggests: 
     knitr,
     rmarkdown,

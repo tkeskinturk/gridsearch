@@ -7,22 +7,20 @@
 buildDGP(
   n = 1000,
   t = 3,
-  rate = 0.25,
+  rate = 0.5,
   balance_dir = 0.5,
   balance_res = 0.5,
-  strength = 1,
-  reliable = 0.8,
-  export = TRUE,
-  patterns = FALSE,
-  slopes = FALSE
+  strength = 0.5,
+  reliable = 1,
+  export = FALSE
 )
 }
 \arguments{
-\item{n}{The number of units in the DGP.}
+\item{n}{The number of individuals in the DGP.}
 
 \item{t}{The number of time periods.}
 
-\item{rate}{The percent of units changing across the panel.}
+\item{rate}{The percent of individuals changing across the panel.}
 
 \item{balance_dir}{The direction of change, where 0 codes negative change, 1 codes positive change, and all values in-between codes the percentage of changers changing in the positive direction.}
 
@@ -33,85 +31,10 @@ buildDGP(
 \item{reliable}{The reliability score of the outcome measurement.}
 
 \item{export}{If \code{export = TRUE}, the function exports the simulated dataset.}
-
-\item{patterns}{If \code{patterns = TRUE}, the function exports the concatenated panel patterns.}
-
-\item{slopes}{If \code{slopes = TRUE}, the function exports slope coefficients.}
 }
 \value{
 A dataframe or a list.
 }
 \description{
-This function (1) builds a simulated dataset using the parameters supplied in the function call, (2) generates distinct outcome patterns by concatenating the outcomes across time periods for each individual and provides counts for each pattern, (3) calculates slope coefficients of change at the individual level.
+This function builds a simulated dataset and tabulates the simulated trajectories using the parameters supplied in the function call.
 }
-\section{Examples}{
-\strong{Basic \code{\link[=buildDGP]{buildDGP()}} call:}
-
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{set.seed(11235)
-data <- buildDGP(n = 2,
-                 t = 3,
-                 rate = 0.5,
-                 balance_dir = 1,
-                 balance_res = 0.5,
-                 strength = 1,
-                 reliable = 0.9,
-                 export = TRUE,
-                 patterns = FALSE,
-                 slopes = FALSE)
-print(data)
-#> # A tibble: 6 x 6
-#>     pid changer timing     t y_true y_obs
-#>   <int>   <int>  <dbl> <dbl>  <dbl> <dbl>
-#> 1     1       0    0     0   -0.297     1
-#> 2     1       0    0     0.5 -0.297     0
-#> 3     1       0    0     1   -0.297     1
-#> 4     2       1    0.5   0   -1.42      0
-#> 5     2       1    0.5   0.5 -0.424     1
-#> 6     2       1    0.5   1   -0.424     0
-}\if{html}{\out{</div>}}
-
-\strong{Basic \code{\link[=buildDGP]{buildDGP()}} call with \link{patterns}:}
-
-\if{html}{\out{<div class="sourceCode r">}}\preformatted{set.seed(11235)
-data <- buildDGP(n = 100,
-                 t = 3,
-                 rate = 0.5,
-                 balance_dir = 0.5,
-                 balance_res = 0.5,
-                 strength = 1,
-                 reliable = 0.9,
-                 export = TRUE,
-                 patterns = TRUE,
-                 slopes = FALSE)
-print(data)
-#> $data
-#> # A tibble: 300 x 6
-#>      pid changer timing     t   y_true y_obs
-#>    <int>   <int>  <dbl> <dbl>    <dbl> <dbl>
-#>  1     1       1    0.5   0   -0.297       0
-#>  2     1       1    0.5   0.5 -1.30        0
-#>  3     1       1    0.5   1   -1.30        0
-#>  4     2       0    0     0   -1.42        0
-#>  5     2       0    0     0.5 -1.42        0
-#>  6     2       0    0     1   -1.42        0
-#>  7     3       0    0     0   -0.216       0
-#>  8     3       0    0     0.5 -0.216       0
-#>  9     3       0    0     1   -0.216       0
-#> 10     4       0    0     0   -0.00588     0
-#> # i 290 more rows
-#> 
-#> $patterns
-#> # A tibble: 8 x 2
-#>   patterns     n
-#>   <chr>    <int>
-#> 1 000         35
-#> 2 001          6
-#> 3 010          3
-#> 4 011          2
-#> 5 100          7
-#> 6 101          5
-#> 7 110          6
-#> 8 111         36
-}\if{html}{\out{</div>}}
-}
-

@@ -3,7 +3,7 @@
 export(buildDGP)
 export(gridPlot)
 export(gridSearch)
-export(simulateChangers)
+importFrom(data.table,.N)
 importFrom(data.table,.SD)
 importFrom(rlang,":=")
 importFrom(rlang,.data)
