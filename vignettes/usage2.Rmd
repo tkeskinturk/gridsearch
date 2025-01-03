@@ -26,8 +26,10 @@ df <- buildDGP2()
 samples <- gridSearch2(df,
                        t = 3,
                        caliper = .04,
-                       n_samples = 5000,
-                       verbose = TRUE)
+                       n_samples = 1e4,
+                       verbose = TRUE, 
+                       fix = "rel_sample", 
+                       fix_at = 1)
 
 
 ###--- With slopes and ks distance
