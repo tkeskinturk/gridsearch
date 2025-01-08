@@ -37,8 +37,10 @@ gridPlot <-
     data <- data[, sapply(data, stats::sd) != 0]
 
     ## Keep samples closest to data
-    cutoff <- quantile(data$error, probs = percent/100)
-    data <- data |> dplyr::filter(error <= cutoff) |> select(- error)
+    cutoff <- stats::quantile(data$error, probs = percent/100)
+    data <- data |>
+      dplyr::filter(.data$error <= cutoff) |>
+      dplyr::select(-.data$error)
 
     if (plot == "posterior") {
 

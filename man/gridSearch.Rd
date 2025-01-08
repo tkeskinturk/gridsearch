@@ -10,7 +10,6 @@ gridSearch(
   tname,
   pname,
   n_samples = 1000,
-  caliper = 0.1,
   ic_min = 0,
   ic_max = 2,
   pc_min = 0,
@@ -21,7 +20,6 @@ gridSearch(
   rel_max = 1,
   fix = "none",
   fix_at = 1,
-  slopes = FALSE,
   verbose = TRUE
 )
 }
@@ -35,8 +33,6 @@ gridSearch(
 \item{pname}{The unit identifier.}
 
 \item{n_samples}{The number of samples from priors.}
-
-\item{caliper}{A caliper value.}
 
 \item{ic_min}{Minimum strength of change parameter.}
 
@@ -57,8 +53,6 @@ gridSearch(
 \item{fix}{Fix any parameter? (values: "ic_sample," "pc_sample," etc.).}
 
 \item{fix_at}{At what value to fix it on?}
-
-\item{slopes}{Whether to use \code{slopes} rather than \verb{contingency table}.}
 
 \item{verbose}{Whether to see detailed messages.}
 }

@@ -60,7 +60,7 @@ Given this setup, how can we answer the two questions we initially posed?
 
 ## Grid Search Algorithm
 
-The grid-search algorithm tries to answer this question. It performs six main steps:
+The grid-search algorithm tries to answer this question. It performs five main steps:
 
 1) Simulates data with several parameters of interest for our DGPs---rate of change, strength of change, direction of change, and reliability of response measurement using
 
@@ -68,15 +68,13 @@ The grid-search algorithm tries to answer this question. It performs six main st
    y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it} \sim \mathcal{N}(0, 1) \tag{DGP}
    $$
 
-2) Calculates the distribution of response trajectories in both the observed and simulated data, by either tabulating response patterns across time or estimating slope coefficients;
+2) Calculates the distribution of response trajectories in both the observed and simulated data by estimating slope coefficients at the individual level;
 
-3) Compares the simulated trajectories to the observed trajectories. It does so by calculating a "distance" score to quantify the extent to which specific simulated values reproduce the observed values;
+3) Compares the simulated trajectories to the observed trajectories by calculating a Kolmogorov-Smirnov distance between the distribution of simulated slope coefficients and the distribution of observed slope coefficients;
 
-4) Rejects the simulated data if the distance measure is above a certain pre-specified "caliper" value, and accepts it otherwise;
+4) Replicates this analysis $N$ times by drawing samples from the specified priors; 
 
-5) Replicates this analysis $N$ times by drawing samples from the specified priors; 
-
-6) Inspects the parameter combinations that most closely approximate to the observed values.
+5) Inspects the parameter combinations that most closely approximate to the observed values.
 
 Let's apply this to our simulated dataset.
 
@@ -86,19 +84,19 @@ grid <- gridSearch(
   yname = 'y', ## observed binary outcome
   tname = 'time', ## time variable
   pname = 'pid', ## panel identifier
-  n_samples = 1e4, ## the number of draws from the priors
-  caliper = .15 ## the distance to accept or reject specific samples
+  n_samples = 1e4 ## the number of draws from the priors
 )
 
 head(grid)
 ```
 
-The `gridSearch` function gives us a data table with four columns:
+The `gridSearch` function gives us a data table with five columns:
 
 - `ic_sample` shows the value of the `strength` parameter informing our DGP,
 - `pc_sample` shows the value of the `rate` parameter informing our DGP,
 - `balance` shows the extent to which our sample makes positive changes; put differently, it shows the `direction` of change in the sample,
 - `rel_sample` provides a value of the reliability score retrieved from the search.
+- `error` provides the KS distance between observed and simulated trajectories.
 
 Each row is one DGP that is "accepted" by our protocol with a given caliper value.
 
@@ -113,7 +111,7 @@ gridPlot(grid, plot = "posterior")
 Alternatively, we can look at the conditional accepted samples:
 
 ```{r}
-gridPlot(grid, plot = "conditional")
+gridPlot(grid, plot = "conditional", percent = 2)
 ```
 
 # Warnings and Notes
