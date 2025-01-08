@@ -140,7 +140,7 @@ posed?</p>
 <h3 id="grid-search-algorithm">Grid Search Algorithm<a class="anchor" aria-label="anchor" href="#grid-search-algorithm"></a>
 </h3>
 <p>The grid-search algorithm tries to answer this question. It performs
-six main steps:</p>
+five main steps:</p>
 <ol style="list-style-type: decimal">
 <li>
 <p>Simulates data with several parameters of interest for our
@@ -151,14 +151,12 @@ y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it
 </annotation></semantics></math></p>
 </li>
 <li><p>Calculates the distribution of response trajectories in both the
-observed and simulated data, by either tabulating response patterns
-across time or estimating slope coefficients;</p></li>
-<li><p>Compares the simulated trajectories to the observed trajectories.
-It does so by calculating a “distance” score to quantify the extent to
-which specific simulated values reproduce the observed values;</p></li>
-<li><p>Rejects the simulated data if the distance measure is above a
-certain pre-specified “caliper” value, and accepts it
-otherwise;</p></li>
+observed and simulated data by estimating slope coefficients at the
+individual level;</p></li>
+<li><p>Compares the simulated trajectories to the observed trajectories
+by calculating a Kolmogorov-Smirnov distance between the distribution of
+simulated slope coefficients and the distribution of observed slope
+coefficients;</p></li>
 <li><p>Replicates this analysis
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>
 times by drawing samples from the specified priors;</p></li>
@@ -172,40 +170,29 @@ to the observed values.</p></li>
 <span>  yname <span class="op">=</span> <span class="st">'y'</span>, <span class="co">## observed binary outcome</span></span>
 <span>  tname <span class="op">=</span> <span class="st">'time'</span>, <span class="co">## time variable</span></span>
 <span>  pname <span class="op">=</span> <span class="st">'pid'</span>, <span class="co">## panel identifier</span></span>
-<span>  n_samples <span class="op">=</span> <span class="fl">1e4</span>, <span class="co">## the number of draws from the priors</span></span>
-<span>  caliper <span class="op">=</span> <span class="fl">.15</span> <span class="co">## the distance to accept or reject specific samples</span></span>
+<span>  n_samples <span class="op">=</span> <span class="fl">1e4</span> <span class="co">## the number of draws from the priors</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "10%"</span></span>
-<span><span class="co">#&gt; [1] "AR: 1.1%"</span></span>
 <span><span class="co">#&gt; [1] "20%"</span></span>
-<span><span class="co">#&gt; [1] "AR: 1.4%"</span></span>
 <span><span class="co">#&gt; [1] "30%"</span></span>
-<span><span class="co">#&gt; [1] "AR: 1.5%"</span></span>
 <span><span class="co">#&gt; [1] "40%"</span></span>
-<span><span class="co">#&gt; [1] "AR: 1.5%"</span></span>
 <span><span class="co">#&gt; [1] "50%"</span></span>
-<span><span class="co">#&gt; [1] "AR: 1.4%"</span></span>
 <span><span class="co">#&gt; [1] "60%"</span></span>
-<span><span class="co">#&gt; [1] "AR: 1.5%"</span></span>
 <span><span class="co">#&gt; [1] "70%"</span></span>
-<span><span class="co">#&gt; [1] "AR: 1.4%"</span></span>
 <span><span class="co">#&gt; [1] "80%"</span></span>
-<span><span class="co">#&gt; [1] "AR: 1.4%"</span></span>
 <span><span class="co">#&gt; [1] "90%"</span></span>
-<span><span class="co">#&gt; [1] "AR: 1.3%"</span></span>
 <span><span class="co">#&gt; [1] "100%"</span></span>
-<span><span class="co">#&gt; [1] "AR: 1.4%"</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">grid</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    ic_sample pc_sample bal_sample rel_sample</span></span>
-<span><span class="co">#&gt;        &lt;num&gt;     &lt;num&gt;      &lt;num&gt;      &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 1.0322507 0.7445152  0.9646666  0.8663515</span></span>
-<span><span class="co">#&gt; 2: 1.1328781 0.6322543  0.8840945  0.8712028</span></span>
-<span><span class="co">#&gt; 3: 0.9579910 0.4495958  0.9640791  0.8405229</span></span>
-<span><span class="co">#&gt; 4: 1.9532644 0.3531195  0.8201550  0.9198327</span></span>
-<span><span class="co">#&gt; 5: 0.7912792 0.6350539  0.9839783  0.9342152</span></span>
-<span><span class="co">#&gt; 6: 1.9839352 0.4101874  0.8015720  0.9760054</span></span></code></pre></div>
-<p>The <code>gridSearch</code> function gives us a data table with four
+<span><span class="co">#&gt;    ic_sample pc_sample bal_sample rel_sample     error</span></span>
+<span><span class="co">#&gt;        &lt;num&gt;     &lt;num&gt;      &lt;num&gt;      &lt;num&gt;     &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: 0.1615003 0.8343330 0.60076089  0.1572084 0.2002322</span></span>
+<span><span class="co">#&gt; 2: 0.3604597 0.6863544 0.10009245  0.9301401 0.1770000</span></span>
+<span><span class="co">#&gt; 3: 0.2552555 0.3090493 0.03734205  0.1698264 0.1782102</span></span>
+<span><span class="co">#&gt; 4: 0.2721172 0.1380610 0.11318473  0.8798949 0.1500000</span></span>
+<span><span class="co">#&gt; 5: 0.3497646 0.7063219 0.27114909  0.6377779 0.1260000</span></span>
+<span><span class="co">#&gt; 6: 1.7581699 0.5516272 0.16823312  0.5071633 0.2640000</span></span></code></pre></div>
+<p>The <code>gridSearch</code> function gives us a data table with five
 columns:</p>
 <ul>
 <li>
@@ -221,6 +208,9 @@ of change in the sample,</li>
 <li>
 <code>rel_sample</code> provides a value of the reliability score
 retrieved from the search.</li>
+<li>
+<code>error</code> provides the KS distance between observed and
+simulated trajectories.</li>
 </ul>
 <p>Each row is one DGP that is “accepted” by our protocol with a given
 caliper value.</p>
@@ -235,7 +225,7 @@ caliper value.</p>
 <p><img src="usage_files/figure-html/unnamed-chunk-5-1.png" width="90%" style="display: block; margin: auto;"></p>
 <p>Alternatively, we can look at the conditional accepted samples:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, plot <span class="op">=</span> <span class="st">"conditional"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, plot <span class="op">=</span> <span class="st">"conditional"</span>, percent <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
 <p><img src="usage_files/figure-html/unnamed-chunk-6-1.png" width="90%" style="display: block; margin: auto;"></p>
 </div>
 </div>
