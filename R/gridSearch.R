@@ -17,7 +17,6 @@
 #' @param tname The time identifier.
 #' @param pname The unit identifier.
 #' @param n_samples The number of samples from priors.
-#' @param caliper A caliper value.
 #' @param ic_min Minimum strength of change parameter.
 #' @param ic_max Maximum strength of change parameter.
 #' @param pc_min Minimum rate of change parameter.
@@ -28,7 +27,6 @@
 #' @param rel_max Maximum reliability parameter.
 #' @param fix Fix any parameter? (values: "ic_sample," "pc_sample," etc.).
 #' @param fix_at At what value to fix it on?
-#' @param slopes Whether to use `slopes` rather than `contingency table`.
 #' @param verbose Whether to see detailed messages.
 #' @return A data frame.
 #'
@@ -48,7 +46,6 @@ gridSearch <-
     tname,
     pname,
     n_samples = 1000,
-    caliper = .1,
     ic_min = 0,
     ic_max = 2,
     pc_min = 0,
@@ -59,9 +56,7 @@ gridSearch <-
     rel_max = 1,
     fix = "none",
     fix_at = 1,
-    slopes = FALSE,
     verbose = TRUE
-
     ) {
 
     # ----------------------------------------------------- #
@@ -102,21 +97,16 @@ gridSearch <-
     # ----------------------------------------------------- #
 
     ## preps
-    ts <- j
-    accepted <- list()
-    counter <- 0
+    samples <- list()
 
-    ## slope preps
-    if (slopes == TRUE) {
+    ## slopes
       ref <- varyingSlopes(t)
-      j <- "estimate" # column to join on
       data <- collapse::join(data,
                              ref,
-                             on = ts,
+                             on = j,
                              how = "left",
                              verbose = FALSE)
       data <- stats::aggregate(N ~ estimate, data, sum)
-    }
 
     # ----------------------------------------------------- #
     # ABC                                                   #
@@ -150,55 +140,36 @@ gridSearch <-
         reliable = rel_sample
       )
 
-      ### --- slopes
-      if (slopes == TRUE) {
-        res <- collapse::join(res,
-                              ref,
-                              on = ts,
-                              how = "left",
-                              verbose = FALSE)
-        res <- stats::aggregate(N ~ estimate, res, sum)
-      }
-
-      ### --- compute error
+      ### --- join slopes
       res <- collapse::join(res,
-                            data,
+                            ref,
                             on = j,
-                            how = "full",
+                            how = "left",
                             verbose = FALSE)
-      res[is.na(res)] <- 0
+      res <- stats::aggregate(N ~ estimate, res, sum)
 
       ### --- ks test
-      if (slopes == TRUE) {
-
-        ks <- suppressWarnings(stats::ks.test(
-          x = rep(res$estimate, res$N * 100),
-          y = rep(data$estimate, data$N * 100)
+      ks <- suppressWarnings(stats::ks.test(
+          x = rep(res$estimate, res$N * 1000),
+          y = rep(data$estimate, data$N * 1000)
         ))
         error <- ks$statistic
-      }
 
-      else{
-        res$diff <- res$N - res$N_data
-        error <- sum(abs(res$diff))
-      }
 
       ### --- accept/reject
-      if (error < caliper) {
-        accepted[[i]] <-
-          data.table::data.table(ic_sample, pc_sample, bal_sample, rel_sample)
-        counter <- counter + 1
-      }
+        samples[[i]] <-
+          data.table::data.table(ic_sample, pc_sample, bal_sample, rel_sample, error)
+
+
       if (i %% 1000 == 0 && verbose == TRUE) {
         print(paste0(round(i / n_samples * 100, 1), "%"))
-        print(paste0("AR: ", round(counter / i * 100, 1), "%"))
       }
 
     }
 
-    accepted <- data.table::rbindlist(accepted)
+    samples <- data.table::rbindlist(samples)
 
-    return(accepted)
+    return(samples)
 
   }
 
