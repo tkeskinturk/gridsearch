@@ -12,7 +12,8 @@ buildDGP(
   balance_res = 0.5,
   strength = 0.5,
   reliable = 1,
-  export = FALSE
+  export = FALSE,
+  status = FALSE
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ buildDGP(
 \item{reliable}{The reliability score of the outcome measurement.}
 
 \item{export}{If \code{export = TRUE}, the function exports the simulated dataset.}
+
+\item{status}{if \code{status = TRUE}, the function exports a column for changer status.}
 }
 \value{
 A dataframe or a list.

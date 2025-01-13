@@ -19,6 +19,7 @@
 #' @param strength The strength of change in the latent variable.
 #' @param reliable The reliability score of the outcome measurement.
 #' @param export If `export = TRUE`, the function exports the simulated dataset.
+#' @param status if `status = TRUE`, the function exports a column for changer status.
 #'
 #' @return A dataframe or a list.
 #'
@@ -40,7 +41,8 @@ buildDGP <-
     balance_res = .5,
     strength = .5,
     reliable = 1,
-    export = FALSE) {
+    export = FALSE,
+    status = FALSE) {
 
     if (n <= 0) stop("Error: We need at least some people. Check your `n` call.")
     if (t <= 1) stop("Error: We need at least 2 time periods to generate panel data. Try again.")
@@ -96,13 +98,22 @@ buildDGP <-
     mt[, "N" := .SD[["N"]] / sum(.SD[["N"]])]
     mt <- as.data.frame(mt)
 
+    ## generate the changer column
+    changer_col <- rep(0, n)
+    if (status) {
+      changer_col[changers] <- change_dir # assign change direction
+      data$changer <- changer_col # add changer column
+    }
+
     if (export == TRUE) {
 
       return(
         list(patterns = mt, data = data)
       )
 
-    } else {
+    }
+
+    else {
 
       return(
         mt

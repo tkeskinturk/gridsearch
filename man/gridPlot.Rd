@@ -11,7 +11,7 @@ gridPlot(data, plot = c("posterior", "conditional"), percent = 5)
 
 \item{plot}{If \code{posterior}, plots a density plot for each non-fixed parameter. If \code{conditional}, plots the accepted samples by different balance levels.}
 
-\item{percent}{The percentage of samples to keep}
+\item{percent}{The percentage of samples to keep.}
 }
 \value{
 A \code{ggplot2} object.
