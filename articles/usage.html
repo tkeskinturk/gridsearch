@@ -80,6 +80,9 @@ large segments of the population may shift their opinions in a specific
 direction in small or large amounts; a small segment of the population
 may have large changes; or a mix of changes—including positive
 <em>and</em> negative movements—may alter the overall balance.</p>
+<p>More importantly, we cannot simply decompose the observed
+trajectories to these components because reliability concerns mitigate
+taking each survey response <em>too seriously</em>.</p>
 <p>The <code>gridsearch</code> is designed to give researchers a
 preliminary check as to what potential data generation processes may
 have generated their observed data.</p>
@@ -145,21 +148,52 @@ five main steps:</p>
 <li>
 <p>Simulates data with several parameters of interest for our
 DGPs—rate of change, strength of change, direction of change, and
-reliability of response measurement using</p>
+reliability of response measurement—using</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mo>=</mo><msub><mi>Y</mi><mi>i</mi></msub><mo>+</mo><mi>δ</mi><msub><mi>τ</mi><mi>i</mi></msub><msub><mi>D</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mo>+</mo><msub><mi>ϵ</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mspace width="0.222em"></mspace><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> with </mtext><mspace width="0.333em"></mspace></mrow><msub><mi>ϵ</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mo>∼</mo><mi>𝒩</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
 y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it} \sim \mathcal{N}(0, 1) \tag{DGP}
 </annotation></semantics></math></p>
+<p>where we have a random variable
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Y</mi><mi>i</mi></msub><annotation encoding="application/x-tex">Y_{i}</annotation></semantics></math>
+for true scores, with varying realizations
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>y</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">y_{it}</annotation></semantics></math>,
+representing a person
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>i</mi><annotation encoding="application/x-tex">i</annotation></semantics></math>’s
+beliefs at time
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>;
+an indicator for change,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>D</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><annotation encoding="application/x-tex">D_{it}</annotation></semantics></math>,
+operationalized as a non-reversible trigger if there is a
+respondent-level change in true scores; an effect size,
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>δ</mi><annotation encoding="application/x-tex">\delta</annotation></semantics></math>,
+and a respondent level direction multiplier
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>τ</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\tau_i</annotation></semantics></math>
+that indexes whether the change is positive or
+negative.[^changing]</p>
 </li>
-<li><p>Calculates the distribution of response trajectories in both the
-observed and simulated data by estimating slope coefficients at the
-individual level;</p></li>
-<li><p>Compares the simulated trajectories to the observed trajectories
-by calculating a Kolmogorov-Smirnov distance between the distribution of
-simulated slope coefficients and the distribution of observed slope
-coefficients;</p></li>
+<li>
+<p>Calculates the distribution of change scores in observed and
+simulated data, by estimating respondent-level change scores using
+survey response trajectories at the person level. To put it differently,
+it first fits, for a binary outcome,</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ℙ</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo>=</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msub><mi>β</mi><mn>0</mn></msub><mo>+</mo><msub><mi>β</mi><mn>1</mn></msub><mi>t</mi><mo>,</mo><mspace width="0.222em"></mspace><mspace width="0.222em"></mspace><mi>t</mi><mo>∈</mo><mrow><mo stretchy="true" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+\mathbb{P}(y = 1) = \beta_0 + \beta_1t, \ \ t \in [0, 1]
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+is a normalized time variable, and estimates a predicted change score by
+calculating the difference between the prediction at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">t = 1</annotation></semantics></math>
+and the prediction at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">t = 0</annotation></semantics></math>.</p>
+</li>
+<li><p>Compares the distribution of simulated trajectories to the
+distribution of observed trajectories by calculating a “distance”
+score—specifically, Kolmogorov-Smirnov distance—to quantify the extent
+to which specific simulated values reproduce the observed
+values;</p></li>
 <li><p>Replicates this analysis
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>
-times by drawing samples from the specified priors;</p></li>
+times by drawing samples for our main parameters;</p></li>
 <li><p>Inspects the parameter combinations that most closely approximate
 to the observed values.</p></li>
 </ol>
@@ -212,20 +246,18 @@ retrieved from the search.</li>
 <code>error</code> provides the KS distance between observed and
 simulated trajectories.</li>
 </ul>
-<p>Each row is one DGP that is “accepted” by our protocol with a given
-caliper value.</p>
 </div>
 <div class="section level3">
 <h3 id="evaluating-the-potential-dgps">Evaluating the Potential DGPs<a class="anchor" aria-label="anchor" href="#evaluating-the-potential-dgps"></a>
 </h3>
-<p>We can visually inspect the parameter distributions using
-<code>gridPlot</code>:</p>
+<p>We can visually inspect the best 5% accepted parameter distributions
+using <code>gridPlot</code>:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, plot <span class="op">=</span> <span class="st">"posterior"</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, plot <span class="op">=</span> <span class="st">"posterior"</span>, percent <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 <p><img src="usage_files/figure-html/unnamed-chunk-5-1.png" width="90%" style="display: block; margin: auto;"></p>
 <p>Alternatively, we can look at the conditional accepted samples:</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, plot <span class="op">=</span> <span class="st">"conditional"</span>, percent <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, plot <span class="op">=</span> <span class="st">"conditional"</span>, percent <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
 <p><img src="usage_files/figure-html/unnamed-chunk-6-1.png" width="90%" style="display: block; margin: auto;"></p>
 </div>
 </div>
@@ -237,9 +269,9 @@ caliper value.</p>
 <li>Currently, <code>gridsearch</code> only accommodates binary
 outcomes. We are hoping to generalize these procedures to cases where we
 have more than 2 response categories.</li>
-<li>While the <code>slopes</code> method in the <code>gridSearch</code>
-function may be helpful in longer panels, we note that its properties
-are less worked out than the default method.</li>
+<li>
+<code>gridSearch</code> requires a balanced panel dataset, with no
+missing values.</li>
 </ul>
 <p>For more details about the protocol, please see the article, <em>The
 Promises and Pitfalls of Using Panel Data to Understand Individual
