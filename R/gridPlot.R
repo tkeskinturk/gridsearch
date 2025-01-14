@@ -25,21 +25,21 @@ gridPlot <-
 
     plot = match.arg(plot)
 
-    ## prettify the parameters
+    # --- prettify the parameters
     levels <- c("ic_sample", "pc_sample", "bal_sample", "rel_sample")
     labels <- c("Change Strength",
                 "Change Rate",
                 "Change Balance",
                 "Response Reliability")
 
-    ## drop fixed parameters
+    # --- drop fixed parameters
     data <- as.data.frame(data)
     data <- data[, sapply(data, stats::sd) != 0]
 
-    ## Keep samples closest to data
-    cutoff <- stats::quantile(data$error, probs = percent/100)
+    # --- keep samples closest to data
     data <- data |>
-      dplyr::filter(.data$error <= cutoff) |>
+      dplyr::arrange(.data$error) |>
+      dplyr::slice(1:nrow(data) * percent) |>
       dplyr::select(-.data$error)
 
     if (plot == "posterior") {

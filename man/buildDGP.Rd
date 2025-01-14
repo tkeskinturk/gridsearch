@@ -23,9 +23,9 @@ buildDGP(
 
 \item{rate}{The percent of individuals changing across the panel.}
 
-\item{balance_dir}{The direction of change, where 0 codes negative change, 1 codes positive change, and all values in-between codes the percentage of changers changing in the positive direction.}
+\item{balance_dir}{The direction of change, where 0 means all negative change, 1 means all positive change, and values in-between means the percentage of changers changing positively.}
 
-\item{balance_res}{The marginal distribution of the outcome (effectively regulating the percent distribution of 0s and 1s).}
+\item{balance_res}{The marginal distribution of the outcome (the percent distribution of 0s and 1).}
 
 \item{strength}{The strength of change in the latent variable.}
 
@@ -33,7 +33,7 @@ buildDGP(
 
 \item{export}{If \code{export = TRUE}, the function exports the simulated dataset.}
 
-\item{status}{if \code{status = TRUE}, the function exports a column for changer status.}
+\item{status}{if \code{status = TRUE}, the function exports changer status.}
 }
 \value{
 A dataframe or a list.

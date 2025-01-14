@@ -4,14 +4,14 @@
 
 ### note: this function
 ###       (a) takes a panel dataframe and processes it,
-###       (b) performs an ABC grid search via tabulated response patterns/slopes,
+###       (b) performs an ABC grid search via tabulated response slope patterns,
 ###       (c) returns accepted samples for IC, PC, BAL & REL from the search.
 
 # FUNCTION CALL -------------------------------------------------------------- #
 
 #' Grid Search for Adjudicating DGPs
 #'
-#' This function uses an Approximate Bayesian Computation (ABC) algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements simulations across plausible values---rate of change, strength of change, directionality, and reliability---and provides a list of accepted samples from this procedure.
+#' This function uses an Approximate Bayesian Computation (ABC) algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements simulations across plausible values---rate of change, strength of change, directionality, and reliability---and provides a dataframe with an error score per DGP.
 #' @param data A panel dataframe in the long format.
 #' @param yname The outcome identifier.
 #' @param tname The time identifier.
@@ -65,15 +65,15 @@ gridSearch <-
 
     data <- data.table::as.data.table(data)
 
-    # use the column names provided in the function arguments
+    # --- column names provided in the function arguments
     data$y <- data[[yname]] # access the column for `yname`
     data$t <- data[[tname]] # access the column for `tname`
     data$p <- data[[pname]] # access the column for `pname`
 
-    # subset the relevant columns
+    # --- subset the relevant columns
     data <- data[, .SD, .SDcols = c("y", "t", "p")]
 
-    # check if the dataframe supplied is balanced
+    # --- check if the dataframe supplied is balanced
     data <- stats::na.omit(data) ## missing
     is_balanced <- all(table(data$p) == (table(data$p))[1])
     if (!is_balanced) {
@@ -83,10 +83,10 @@ gridSearch <-
     p <- table(data$t)[[1]] ## the number of unique individuals
     t <- table(data$p)[[1]] ## the number of time periods
 
-    # reshape the data from long to wide format
+    # --- reshape the data from long to wide format
     data <- data.table::dcast(data, p ~ t, value.var = "y")
 
-    # rename the columns for easy handling
+    # --- rename the columns for easy handling
     j <- paste0("V", 1:t) ## columns to join on
     data.table::setnames(data, old = as.character(1:t), new = paste0("V", 1:t))
     data <- data[, .N, by=j]
@@ -96,17 +96,14 @@ gridSearch <-
     # PREPARATIONS                                          #
     # ----------------------------------------------------- #
 
-    ## preps
-    samples <- list()
-
-    ## slopes
-      ref <- varyingSlopes(t)
-      data <- collapse::join(data,
-                             ref,
-                             on = j,
-                             how = "left",
-                             verbose = FALSE)
-      data <- stats::aggregate(N ~ estimate, data, sum)
+    samples <- list() # an empty list
+    ref <- varyingSlopes(t) # reference slopes
+    data <- collapse::join(data,
+                           ref,
+                           on = j,
+                           how = "left",
+                           verbose = FALSE)
+    data <- stats::aggregate(N ~ estimate, data, sum)
 
     # ----------------------------------------------------- #
     # ABC                                                   #
@@ -114,7 +111,7 @@ gridSearch <-
 
     for (i in 1:n_samples) {
 
-      ### --- sample from prior
+      # --- sample from prior
       ic_sample <- stats::runif(n = 1,
                                 min = ic_min,
                                 max = ic_max)
@@ -129,7 +126,7 @@ gridSearch <-
                                  max = rel_max)
       assign(fix, fix_at)
 
-      ### --- simulate the data
+      # --- simulate the data
       res <- buildDGP(
         n = p,
         t = t,
@@ -140,7 +137,7 @@ gridSearch <-
         reliable = rel_sample
       )
 
-      ### --- join slopes
+      # --- join slopes
       res <- collapse::join(res,
                             ref,
                             on = j,
@@ -148,7 +145,7 @@ gridSearch <-
                             verbose = FALSE)
       res <- stats::aggregate(N ~ estimate, res, sum)
 
-      ### --- ks test
+      # --- ks test
       ks <- suppressWarnings(stats::ks.test(
           x = rep(res$estimate, res$N * 1000),
           y = rep(data$estimate, data$N * 1000)
@@ -156,10 +153,13 @@ gridSearch <-
         error <- ks$statistic
 
 
-      ### --- accept/reject
+      # --- accept/reject
         samples[[i]] <-
-          data.table::data.table(ic_sample, pc_sample, bal_sample, rel_sample, error)
-
+          data.table::data.table(ic_sample,
+                                 pc_sample,
+                                 bal_sample,
+                                 rel_sample,
+                                 error)
 
       if (i %% 1000 == 0 && verbose == TRUE) {
         print(paste0(round(i / n_samples * 100, 1), "%"))

@@ -28,6 +28,8 @@ Researchers working with panel data on public opinion generally want to know the
 
 That said, longitudinal change could result from various mechanisms: large segments of the population may shift their opinions in a specific direction in small or large amounts; a small segment of the population may have large changes; or a mix of changes---including positive *and* negative movements---may alter the overall balance.
 
+More importantly, we cannot simply decompose the observed trajectories to these components because reliability concerns mitigate taking each survey response *too seriously*.
+
 The `gridsearch` is designed to give researchers a preliminary check as to what potential data generation processes may have generated their observed data.
 
 # Illustration
@@ -62,17 +64,25 @@ Given this setup, how can we answer the two questions we initially posed?
 
 The grid-search algorithm tries to answer this question. It performs five main steps:
 
-1) Simulates data with several parameters of interest for our DGPs---rate of change, strength of change, direction of change, and reliability of response measurement using
+1) Simulates data with several parameters of interest for our DGPs---rate of change, strength of change, direction of change, and reliability of response measurement---using
 
    $$
    y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it} \sim \mathcal{N}(0, 1) \tag{DGP}
    $$
 
-2) Calculates the distribution of response trajectories in both the observed and simulated data by estimating slope coefficients at the individual level;
+    where we have a random variable $Y_{i}$ for true scores, with varying realizations $y_{it}$, representing a person $i$'s beliefs at time $t$; an indicator for change, $D_{it}$, operationalized as a non-reversible trigger if there is a respondent-level change in true scores; an effect size, $\delta$, and a respondent level direction multiplier $\tau_i$ that indexes whether the change is positive or negative.[^changing]
 
-3) Compares the simulated trajectories to the observed trajectories by calculating a Kolmogorov-Smirnov distance between the distribution of simulated slope coefficients and the distribution of observed slope coefficients;
+2) Calculates the distribution of change scores in observed and simulated data, by estimating respondent-level change scores using survey response trajectories at the person level. To put it differently, it first fits, for a binary outcome,
 
-4) Replicates this analysis $N$ times by drawing samples from the specified priors; 
+   $$
+   \mathbb{P}(y = 1) = \beta_0 + \beta_1t, \ \ t \in [0, 1]
+   $$
+
+   where \( t \) is a normalized time variable, and estimates a predicted change score by calculating the difference between the prediction at \( t = 1 \) and the prediction at \( t = 0 \).
+
+3) Compares the distribution of simulated trajectories to the distribution of observed trajectories by calculating a "distance" score---specifically, Kolmogorov-Smirnov distance---to quantify the extent to which specific simulated values reproduce the observed values;
+
+4) Replicates this analysis $N$ times by drawing samples for our main parameters;
 
 5) Inspects the parameter combinations that most closely approximate to the observed values.
 
@@ -98,20 +108,18 @@ The `gridSearch` function gives us a data table with five columns:
 - `rel_sample` provides a value of the reliability score retrieved from the search.
 - `error` provides the KS distance between observed and simulated trajectories.
 
-Each row is one DGP that is "accepted" by our protocol with a given caliper value.
-
 ## Evaluating the Potential DGPs
 
-We can visually inspect the parameter distributions using `gridPlot`:
+We can visually inspect the best 5% accepted parameter distributions using `gridPlot`:
 
 ```{r}
-gridPlot(grid, plot = "posterior")
+gridPlot(grid, plot = "posterior", percent = 5)
 ```
 
 Alternatively, we can look at the conditional accepted samples:
 
 ```{r}
-gridPlot(grid, plot = "conditional", percent = 2)
+gridPlot(grid, plot = "conditional", percent = 5)
 ```
 
 # Warnings and Notes
@@ -119,6 +127,6 @@ gridPlot(grid, plot = "conditional", percent = 2)
 We would like to flag a few issues that you need to be aware of:
 
 - Currently, `gridsearch` only accommodates binary outcomes. We are hoping to generalize these procedures to cases where we have more than 2 response categories.
-- While the `slopes` method in the `gridSearch` function may be helpful in longer panels, we note that its properties are less worked out than the default method.
+- `gridSearch` requires a balanced panel dataset, with no missing values.
 
 For more details about the protocol, please see the article, *The Promises and Pitfalls of Using Panel Data to Understand Individual Belief Change*, stored in [SocArXiv](https://osf.io/preprints/socarxiv/rhf4q).

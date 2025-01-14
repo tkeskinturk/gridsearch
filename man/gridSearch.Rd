@@ -60,5 +60,5 @@ gridSearch(
 A data frame.
 }
 \description{
-This function uses an Approximate Bayesian Computation (ABC) algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements simulations across plausible values---rate of change, strength of change, directionality, and reliability---and provides a list of accepted samples from this procedure.
+This function uses an Approximate Bayesian Computation (ABC) algorithm to calculate the extent to which a dataframe can be approximated by a known DGP. It implements simulations across plausible values---rate of change, strength of change, directionality, and reliability---and provides a dataframe with an error score per DGP.
 }
