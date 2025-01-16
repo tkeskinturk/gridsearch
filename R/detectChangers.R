@@ -19,6 +19,7 @@
 #' @param strength The strength of change in the latent variable.
 #' @param reliable The reliability score of the outcome measurement.
 #' @param n_samples The number of simulated datasets.
+#' @param verbose See progress messages in the console.
 #' @return A dataframe or a list.
 #'
 #' @export
@@ -39,7 +40,8 @@ detectChangers <-
     balance_res = .5,
     strength = .5,
     reliable = 1,
-    n_samples = 1000) {
+    n_samples = 1000,
+    verbose = TRUE) {
 
     if (n <= 0) stop("Error: We need at least some people. Check your `n` call.")
     if (t <= 1) stop("Error: We need at least 2 time periods to generate panel data. Try again.")
@@ -141,7 +143,7 @@ detectChangers <-
 
       sim[[i]] <- acc
 
-      if (i %% 100 == 0) {
+      if (i %% 100 == 0 & verbose == TRUE) {
         print(paste0(round(i / n_samples * 100, 1), "%"))
       }
 

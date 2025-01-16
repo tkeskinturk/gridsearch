@@ -12,7 +12,8 @@ detectChangers(
   balance_res = 0.5,
   strength = 0.5,
   reliable = 1,
-  n_samples = 1000
+  n_samples = 1000,
+  verbose = TRUE
 )
 }
 \arguments{
@@ -31,6 +32,8 @@ detectChangers(
 \item{reliable}{The reliability score of the outcome measurement.}
 
 \item{n_samples}{The number of simulated datasets.}
+
+\item{verbose}{See progress messages in the console.}
 }
 \value{
 A dataframe or a list.
