@@ -94,48 +94,44 @@ have generated their observed data.</p>
 <h3 id="data-generation-processes">Data Generation Processes<a class="anchor" aria-label="anchor" href="#data-generation-processes"></a>
 </h3>
 <p>Think about a panel study, with an underlying data-generation process
-(DGP). This panel study consists of 1,000 individuals observed across 3
-time periods. Since this is a simulated data, we know that 50% of these
-1,000 individuals <em>changed</em> their underlying latent positions
-within this window with 1 SD in the positive direction. However, there
-are reliability issues with this specific item (let’s say it’s measured
-with a reliability of 90%) and the response resolution is 2 (suppose
-people only say “agree” or “disagree”).</p>
+(DGP).</p>
+<p>This panel study consists of 1,000 individuals observed across 3 time
+periods. Since this is a simulated data, we know that 50% of these 1,000
+individuals <em>changed</em> their underlying latent positions within
+this window with 1 SD in the positive direction. However, there are
+reliability issues with this specific item (let’s say it’s measured with
+a reliability of 90%) and the response resolution is 2 (suppose people
+only say “agree” or “disagree”).</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># load the data</span></span>
-<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"./simulated_data.rds"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="co"># generate the data</span></span>
+<span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/buildDGP.html">buildDGP</a></span><span class="op">(</span></span>
+<span>  n <span class="op">=</span> <span class="fl">1000</span>,</span>
+<span>  t <span class="op">=</span> <span class="fl">3</span>,</span>
+<span>  rate <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  balance_dir <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  balance_res <span class="op">=</span> <span class="fl">0.5</span>,</span>
+<span>  strength <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  reliable <span class="op">=</span> <span class="fl">0.9</span>,</span>
+<span>  export <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span><span class="op">$</span><span class="va">data</span> <span class="op">|&gt;</span></span>
+<span>  <span class="co">## some preps to turn the data into a long format</span></span>
+<span>  <span class="fu">mutate</span><span class="op">(</span>p <span class="op">=</span> <span class="fu">row_number</span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">pivot_longer</span><span class="op">(</span>cols <span class="op">=</span> <span class="op">-</span><span class="va">p</span>, names_to <span class="op">=</span> <span class="st">"t"</span>, values_to <span class="op">=</span> <span class="st">"y"</span><span class="op">)</span> <span class="op">|&gt;</span></span>
+<span>  <span class="fu">mutate</span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer</a></span><span class="op">(</span><span class="fu">str_remove</span><span class="op">(</span><span class="va">t</span>, <span class="st">"V"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># glimpse</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 3</span></span></span>
-<span><span class="co">#&gt;     pid  time     y</span></span>
+<span><span class="co">#&gt;       p     t     y</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1     1     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1     2     1</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1     3     1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1     1     0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1     2     0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     1     3     0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     2     1     0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     2     2     0</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     2     3     0</span></span></code></pre></div>
-<p>As we see, there are individuals (<code>pid</code>) observed on
+<p>As we see, there are individuals (<code>p</code>) observed on
 <code>y</code> across <code>t</code>.</p>
-<p>Over a three-wave period, we have multiple response patterns observed
-in our empirical data or, more specifically, we have 8 potential
-trajectories people can walk through):</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># load the patterns</span></span>
-<span><span class="va">p</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/readRDS.html" class="external-link">readRDS</a></span><span class="op">(</span><span class="st">"./simulated_patterns.rds"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="co"># glimpse</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">p</span><span class="op">)</span></span>
-<span><span class="co">#&gt;   Time 1 Time 2 Time 3 Percentage</span></span>
-<span><span class="co">#&gt; 1      1      1      1      0.340</span></span>
-<span><span class="co">#&gt; 2      0      0      0      0.338</span></span>
-<span><span class="co">#&gt; 3      0      0      1      0.110</span></span>
-<span><span class="co">#&gt; 4      1      1      0      0.017</span></span>
-<span><span class="co">#&gt; 5      0      1      1      0.110</span></span>
-<span><span class="co">#&gt; 6      0      1      0      0.039</span></span>
-<span><span class="co">#&gt; 7      1      0      1      0.031</span></span>
-<span><span class="co">#&gt; 8      1      0      0      0.015</span></span></code></pre></div>
 <p>Given this setup, how can we answer the two questions we initially
 posed?</p>
 </div>
@@ -146,11 +142,26 @@ posed?</p>
 five main steps:</p>
 <ol style="list-style-type: decimal">
 <li>
-<p>Simulates data with several parameters of interest for our
+<p>Create a summary function. In our case, we use the distribution
+of individual-level change scores to summarize the observed data. More
+precisely, in the case of a binary outcome, we fit</p>
+<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ℙ</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo>=</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msub><mi>β</mi><mn>0</mn></msub><mo>+</mo><msub><mi>β</mi><mn>1</mn></msub><mi>t</mi><mo>,</mo><mspace width="0.222em"></mspace><mspace width="0.222em"></mspace><mi>t</mi><mo>∈</mo><mrow><mo stretchy="true" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
+\mathbb{P}(y = 1) = \beta_0 + \beta_1t, \ \ t \in [0, 1]
+</annotation></semantics></math></p>
+<p>where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
+is a normalized time variable, and estimate a predicted change score by
+calculating the difference between the prediction at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">t = 1</annotation></semantics></math>
+and the prediction at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">t = 0</annotation></semantics></math>.</p>
+</li>
+<li>
+<p>Simulate data with several parameters of interest for our
 DGPs—rate of change, strength of change, direction of change, and
 reliability of response measurement—using</p>
 <p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mo>=</mo><msub><mi>Y</mi><mi>i</mi></msub><mo>+</mo><mi>δ</mi><msub><mi>τ</mi><mi>i</mi></msub><msub><mi>D</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mo>+</mo><msub><mi>ϵ</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mspace width="0.222em"></mspace><mrow><mspace width="0.333em"></mspace><mtext mathvariant="normal"> with </mtext><mspace width="0.333em"></mspace></mrow><msub><mi>ϵ</mi><mrow><mi>i</mi><mi>t</mi></mrow></msub><mo>∼</mo><mi>𝒩</mi><mrow><mo stretchy="true" form="prefix">(</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">
-y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it} \sim \mathcal{N}(0, 1) \tag{DGP}
+y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it} \sim \mathcal{N}(0, 1)
 </annotation></semantics></math></p>
 <p>where we have a random variable
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>Y</mi><mi>i</mi></msub><annotation encoding="application/x-tex">Y_{i}</annotation></semantics></math>
@@ -167,43 +178,28 @@ respondent-level change in true scores; an effect size,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>δ</mi><annotation encoding="application/x-tex">\delta</annotation></semantics></math>,
 and a respondent level direction multiplier
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>τ</mi><mi>i</mi></msub><annotation encoding="application/x-tex">\tau_i</annotation></semantics></math>
-that indexes whether the change is positive or
-negative.[^changing]</p>
+that indexes whether the change is positive or negative.</p>
 </li>
-<li>
-<p>Calculates the distribution of change scores in observed and
-simulated data, by estimating respondent-level change scores using
-survey response trajectories at the person level. To put it differently,
-it first fits, for a binary outcome,</p>
-<p><math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ℙ</mi><mrow><mo stretchy="true" form="prefix">(</mo><mi>y</mi><mo>=</mo><mn>1</mn><mo stretchy="true" form="postfix">)</mo></mrow><mo>=</mo><msub><mi>β</mi><mn>0</mn></msub><mo>+</mo><msub><mi>β</mi><mn>1</mn></msub><mi>t</mi><mo>,</mo><mspace width="0.222em"></mspace><mspace width="0.222em"></mspace><mi>t</mi><mo>∈</mo><mrow><mo stretchy="true" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="true" form="postfix">]</mo></mrow></mrow><annotation encoding="application/x-tex">
-\mathbb{P}(y = 1) = \beta_0 + \beta_1t, \ \ t \in [0, 1]
-</annotation></semantics></math></p>
-<p>where
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>
-is a normalized time variable, and estimates a predicted change score by
-calculating the difference between the prediction at
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">t = 1</annotation></semantics></math>
-and the prediction at
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>t</mi><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">t = 0</annotation></semantics></math>.</p>
-</li>
-<li><p>Compares the distribution of simulated trajectories to the
-distribution of observed trajectories by calculating a “distance”
-score—specifically, Kolmogorov-Smirnov distance—to quantify the extent
-to which specific simulated values reproduce the observed
-values;</p></li>
-<li><p>Replicates this analysis
+<li><p>Compute the distance between the summary of the observed data and
+the simulated one. We use the Kolgomorov-Smirnov statistic to measure
+the degree of overlap between the real and simulated distributions of
+change scores.</p></li>
+<li><p>Replicate steps 2 to 4
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>N</mi><annotation encoding="application/x-tex">N</annotation></semantics></math>
-times by drawing samples for our main parameters;</p></li>
-<li><p>Inspects the parameter combinations that most closely approximate
-to the observed values.</p></li>
+times, each one drawing new samples from a proposal distribution for
+each parameter.</p></li>
+<li><p>Take the samples that resulted in the smallest distance as
+plausible DGPs for our observed data. Smaller distances represent a
+closer resemblance of the simulated to the observed data, indicating
+that the proposed DGP could have generated our real-world data.</p></li>
 </ol>
 <p>Let’s apply this to our simulated dataset.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">grid</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/gridSearch.html">gridSearch</a></span><span class="op">(</span></span>
 <span>  data <span class="op">=</span> <span class="va">d</span>,</span>
 <span>  yname <span class="op">=</span> <span class="st">'y'</span>, <span class="co">## observed binary outcome</span></span>
-<span>  tname <span class="op">=</span> <span class="st">'time'</span>, <span class="co">## time variable</span></span>
-<span>  pname <span class="op">=</span> <span class="st">'pid'</span>, <span class="co">## panel identifier</span></span>
+<span>  tname <span class="op">=</span> <span class="st">'t'</span>, <span class="co">## time variable</span></span>
+<span>  pname <span class="op">=</span> <span class="st">'p'</span>, <span class="co">## panel identifier</span></span>
 <span>  n_samples <span class="op">=</span> <span class="fl">1e4</span> <span class="co">## the number of draws from the priors</span></span>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] "10%"</span></span>
@@ -218,14 +214,14 @@ to the observed values.</p></li>
 <span><span class="co">#&gt; [1] "100%"</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="va">grid</span><span class="op">)</span></span>
-<span><span class="co">#&gt;    ic_sample pc_sample bal_sample rel_sample     error</span></span>
-<span><span class="co">#&gt;        &lt;num&gt;     &lt;num&gt;      &lt;num&gt;      &lt;num&gt;     &lt;num&gt;</span></span>
-<span><span class="co">#&gt; 1: 0.1615003 0.8343330 0.60076089  0.1572084 0.2002322</span></span>
-<span><span class="co">#&gt; 2: 0.3604597 0.6863544 0.10009245  0.9301401 0.1770000</span></span>
-<span><span class="co">#&gt; 3: 0.2552555 0.3090493 0.03734205  0.1698264 0.1782102</span></span>
-<span><span class="co">#&gt; 4: 0.2721172 0.1380610 0.11318473  0.8798949 0.1500000</span></span>
-<span><span class="co">#&gt; 5: 0.3497646 0.7063219 0.27114909  0.6377779 0.1260000</span></span>
-<span><span class="co">#&gt; 6: 1.7581699 0.5516272 0.16823312  0.5071633 0.2640000</span></span></code></pre></div>
+<span><span class="co">#&gt;    ic_sample pc_sample bal_sample rel_sample error</span></span>
+<span><span class="co">#&gt;        &lt;num&gt;     &lt;num&gt;      &lt;num&gt;      &lt;num&gt; &lt;num&gt;</span></span>
+<span><span class="co">#&gt; 1: 1.5255671 0.7924700 0.58834925  0.7912586 0.109</span></span>
+<span><span class="co">#&gt; 2: 1.2008167 0.3243189 0.70781997  0.9426350 0.098</span></span>
+<span><span class="co">#&gt; 3: 0.1467324 0.5085090 0.09290602  0.4536723 0.146</span></span>
+<span><span class="co">#&gt; 4: 0.4329042 0.1802234 0.31801234  0.1787105 0.212</span></span>
+<span><span class="co">#&gt; 5: 0.7518931 0.5255735 0.54647617  0.1034809 0.181</span></span>
+<span><span class="co">#&gt; 6: 0.4063079 0.3642176 0.06537869  0.7201241 0.126</span></span></code></pre></div>
 <p>The <code>gridSearch</code> function gives us a data table with five
 columns:</p>
 <ul>
@@ -250,15 +246,15 @@ simulated trajectories.</li>
 <div class="section level3">
 <h3 id="evaluating-the-potential-dgps">Evaluating the Potential DGPs<a class="anchor" aria-label="anchor" href="#evaluating-the-potential-dgps"></a>
 </h3>
-<p>We can visually inspect the best 5% accepted parameter distributions
-using <code>gridPlot</code>:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, plot <span class="op">=</span> <span class="st">"posterior"</span>, percent <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="usage_files/figure-html/unnamed-chunk-5-1.png" width="90%" style="display: block; margin: auto;"></p>
+<p>We can visually inspect the best parameter distributions using
+<code>gridPlot</code>:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, plot <span class="op">=</span> <span class="st">"posterior"</span>, cutoff <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></code></pre></div>
+<p><img src="usage_files/figure-html/unnamed-chunk-4-1.png" width="90%" style="display: block; margin: auto;"></p>
 <p>Alternatively, we can look at the conditional accepted samples:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, plot <span class="op">=</span> <span class="st">"conditional"</span>, percent <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="usage_files/figure-html/unnamed-chunk-6-1.png" width="90%" style="display: block; margin: auto;"></p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/gridPlot.html">gridPlot</a></span><span class="op">(</span><span class="va">grid</span>, plot <span class="op">=</span> <span class="st">"conditional"</span>, cutoff <span class="op">=</span> <span class="fl">0.05</span><span class="op">)</span></span></code></pre></div>
+<p><img src="usage_files/figure-html/unnamed-chunk-5-1.png" width="90%" style="display: block; margin: auto;"></p>
 </div>
 </div>
 <div class="section level2">
