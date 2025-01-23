@@ -19,6 +19,10 @@ knitr::opts_chunk$set(
 library(dplyr)
 library(gridsearch)
 library(ggplot2)
+library(tidyr)
+library(stringr)
+
+set.seed(11235)
 
 ```
 
@@ -36,27 +40,32 @@ The `gridsearch` is designed to give researchers a preliminary check as to what 
 
 ## Data Generation Processes
 
-Think about a panel study, with an underlying data-generation process (DGP). This panel study consists of 1,000 individuals observed across 3 time periods. Since this is a simulated data, we know that 50% of these 1,000 individuals *changed* their underlying latent positions within this window with 1 SD in the positive direction. However, there are reliability issues with this specific item (let's say it's measured with a reliability of 90%) and the response resolution is 2 (suppose people only say "agree" or "disagree").
+Think about a panel study, with an underlying data-generation process (DGP). 
+
+This panel study consists of 1,000 individuals observed across 3 time periods. Since this is a simulated data, we know that 50% of these 1,000 individuals *changed* their underlying latent positions within this window with 1 SD in the positive direction. However, there are reliability issues with this specific item (let's say it's measured with a reliability of 90%) and the response resolution is 2 (suppose people only say "agree" or "disagree").
 
 ```{r}
-# load the data
-d <- readRDS("./simulated_data.rds")
+# generate the data
+d <- buildDGP(
+  n = 1000,
+  t = 3,
+  rate = 0.5,
+  balance_dir = 1,
+  balance_res = 0.5,
+  strength = 1,
+  reliable = 0.9,
+  export = TRUE
+)$data |>
+  ## some preps to turn the data into a long format
+  mutate(p = row_number()) |>
+  pivot_longer(cols = -p, names_to = "t", values_to = "y") |>
+  mutate(t = as.integer(str_remove(t, "V")))
 
 # glimpse
 head(d)
 ```
 
-As we see, there are individuals (`pid`) observed on `y` across `t`.
-
-Over a three-wave period, we have multiple response patterns observed in our empirical data or, more specifically, we have 8 potential trajectories people can walk through):
-
-```{r}
-# load the patterns
-p <- readRDS("./simulated_patterns.rds")
-
-# glimpse
-print(p)
-```
+As we see, there are individuals (`p`) observed on `y` across `t`.
 
 Given this setup, how can we answer the two questions we initially posed?
 
@@ -64,27 +73,27 @@ Given this setup, how can we answer the two questions we initially posed?
 
 The grid-search algorithm tries to answer this question. It performs five main steps:
 
-1) Simulates data with several parameters of interest for our DGPs---rate of change, strength of change, direction of change, and reliability of response measurement---using
-
-   $$
-   y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it} \sim \mathcal{N}(0, 1) \tag{DGP}
-   $$
-
-    where we have a random variable $Y_{i}$ for true scores, with varying realizations $y_{it}$, representing a person $i$'s beliefs at time $t$; an indicator for change, $D_{it}$, operationalized as a non-reversible trigger if there is a respondent-level change in true scores; an effect size, $\delta$, and a respondent level direction multiplier $\tau_i$ that indexes whether the change is positive or negative.[^changing]
-
-2) Calculates the distribution of change scores in observed and simulated data, by estimating respondent-level change scores using survey response trajectories at the person level. To put it differently, it first fits, for a binary outcome,
+1) Create a summary function. In our case, we use the distribution of individual-level change scores to summarize the observed data. More precisely, in the case of a binary outcome, we fit
 
    $$
    \mathbb{P}(y = 1) = \beta_0 + \beta_1t, \ \ t \in [0, 1]
    $$
 
-   where \( t \) is a normalized time variable, and estimates a predicted change score by calculating the difference between the prediction at \( t = 1 \) and the prediction at \( t = 0 \).
+   where \( t \) is a normalized time variable, and estimate a predicted change score by calculating the difference between the prediction at \( t = 1 \) and the prediction at \( t = 0 \).
+   
+2) Simulate data with several parameters of interest for our DGPs---rate of change, strength of change, direction of change, and reliability of response measurement---using
 
-3) Compares the distribution of simulated trajectories to the distribution of observed trajectories by calculating a "distance" score---specifically, Kolmogorov-Smirnov distance---to quantify the extent to which specific simulated values reproduce the observed values;
+   $$
+   y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it} \sim \mathcal{N}(0, 1)
+   $$
 
-4) Replicates this analysis $N$ times by drawing samples for our main parameters;
+   where we have a random variable $Y_{i}$ for true scores, with varying realizations $y_{it}$, representing a person $i$'s beliefs at time $t$; an indicator for change, $D_{it}$, operationalized as a non-reversible trigger if there is a respondent-level change in true scores; an effect size, $\delta$, and a respondent level direction multiplier $\tau_i$ that indexes whether the change is positive or negative.
 
-5) Inspects the parameter combinations that most closely approximate to the observed values.
+3) Compute the distance between the summary of the observed data and the simulated one. We use the Kolgomorov-Smirnov statistic to measure the degree of overlap between the real and simulated distributions of change scores. 
+
+4) Replicate steps 2 to 4 $N$ times, each one drawing new samples from a proposal distribution for each parameter.
+
+5) Take the samples that resulted in the smallest distance as plausible DGPs for our observed data. Smaller distances represent a closer resemblance of the simulated to the observed data, indicating that the proposed DGP could have generated our real-world data. 
 
 Let's apply this to our simulated dataset.
 
@@ -92,8 +101,8 @@ Let's apply this to our simulated dataset.
 grid <- gridSearch(
   data = d,
   yname = 'y', ## observed binary outcome
-  tname = 'time', ## time variable
-  pname = 'pid', ## panel identifier
+  tname = 't', ## time variable
+  pname = 'p', ## panel identifier
   n_samples = 1e4 ## the number of draws from the priors
 )
 
@@ -110,16 +119,16 @@ The `gridSearch` function gives us a data table with five columns:
 
 ## Evaluating the Potential DGPs
 
-We can visually inspect the best 5% accepted parameter distributions using `gridPlot`:
+We can visually inspect the best parameter distributions using `gridPlot`:
 
 ```{r}
-gridPlot(grid, plot = "posterior", percent = 5)
+gridPlot(grid, plot = "posterior", cutoff = 0.05)
 ```
 
 Alternatively, we can look at the conditional accepted samples:
 
 ```{r}
-gridPlot(grid, plot = "conditional", percent = 5)
+gridPlot(grid, plot = "conditional", cutoff = 0.05)
 ```
 
 # Warnings and Notes

@@ -20,7 +20,7 @@
 #' @param reliable The reliability score of the outcome measurement.
 #' @param n_samples The number of simulated datasets.
 #' @param verbose See progress messages in the console.
-#' @return A dataframe or a list.
+#' @return A vector.
 #'
 #' @export
 #'

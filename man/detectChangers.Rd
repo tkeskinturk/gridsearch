@@ -36,7 +36,7 @@ detectChangers(
 \item{verbose}{See progress messages in the console.}
 }
 \value{
-A dataframe or a list.
+A vector.
 }
 \description{
 This function builds a simulated dataset and classifies individuals based on their change scores to see whether we can recover the changers from the true DGP.
