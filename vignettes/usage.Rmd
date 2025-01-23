@@ -20,7 +20,6 @@ library(dplyr)
 library(gridsearch)
 library(ggplot2)
 library(tidyr)
-library(stringr)
 
 set.seed(11235)
 
@@ -57,9 +56,9 @@ d <- buildDGP(
   export = TRUE
 )$data |>
   ## some preps to turn the data into a long format
-  mutate(p = row_number()) |>
-  pivot_longer(cols = -p, names_to = "t", values_to = "y") |>
-  mutate(t = as.integer(str_remove(t, "V")))
+  dplyr::mutate(p = dplyr::row_number()) |>
+  tidyr::pivot_longer(cols = -p, names_to = "t", values_to = "y") |>
+  dplyr::mutate(t = as.integer(gsub("V", "", t)))
 
 # glimpse
 head(d)

@@ -37,8 +37,8 @@ gridPlot <-
     data <- data[, sapply(data, stats::sd) != 0]
 
     # --- keep samples closest to data
-    data <- data |> dplyr::filter(error <= cutoff)
-    data <- data |> dplyr::select(-error)
+    data <- data |> dplyr::filter(.data$error <= cutoff)
+    data <- data |> dplyr::select(-.data$error)
 
     if (nrow(data) < 30) {
       print("Warning: there are less than 30 accepted samples in your DGP list.")
