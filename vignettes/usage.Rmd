@@ -1,0 +1,140 @@
+---
+title: "Using the gridsearch Package"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Using the gridsearch Package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.align = 'center',
+  dpi = 500,
+  out.width = "90%"
+)
+
+library(dplyr)
+library(gridsearch)
+library(ggplot2)
+library(tidyr)
+
+set.seed(11235)
+
+```
+
+# Motivation
+
+Researchers working with panel data on public opinion generally want to know the answers to two basic questions: "how many people changed?" and "how much they changed?"
+
+That said, longitudinal change could result from various mechanisms: large segments of the population may shift their opinions in a specific direction in small or large amounts; a small segment of the population may have large changes; or a mix of changes---including positive *and* negative movements---may alter the overall balance.
+
+More importantly, we cannot simply decompose the observed trajectories to these components because reliability concerns mitigate taking each survey response *too seriously*.
+
+The `gridsearch` is designed to give researchers a preliminary check as to what potential data generation processes may have generated their observed data.
+
+# Illustration
+
+## Data Generation Processes
+
+Think about a panel study, with an underlying data-generation process (DGP). 
+
+This panel study consists of 1,000 individuals observed across 3 time periods. Since this is a simulated data, we know that 50% of these 1,000 individuals *changed* their underlying latent positions within this window with 1 SD in the positive direction. However, there are reliability issues with this specific item (let's say it's measured with a reliability of 90%) and the response resolution is 2 (suppose people only say "agree" or "disagree").
+
+```{r}
+# generate the data
+d <- buildDGP(
+  n = 1000,
+  t = 3,
+  rate = 0.5,
+  balance_dir = 1,
+  balance_res = 0.5,
+  strength = 1,
+  reliable = 0.9,
+  export = TRUE
+)$data |>
+  ## some preps to turn the data into a long format
+  dplyr::mutate(p = dplyr::row_number()) |>
+  tidyr::pivot_longer(cols = -p, names_to = "t", values_to = "y") |>
+  dplyr::mutate(t = as.integer(gsub("V", "", t)))
+
+# glimpse
+head(d)
+```
+
+As we see, there are individuals (`p`) observed on `y` across `t`.
+
+Given this setup, how can we answer the two questions we initially posed?
+
+## Grid Search Algorithm
+
+The grid-search algorithm tries to answer this question. It performs five main steps:
+
+1) Create a summary function. In our case, we use the distribution of individual-level change scores to summarize the observed data. More precisely, in the case of a binary outcome, we fit
+
+   $$
+   log( \frac{\mathbb{P}(y = 1)}{1 - \mathbb{P}(y = 1)} ) = \beta_0 + \beta_1t, \ \ t \in [0, 1]
+   $$
+
+   where \( t \) is a normalized time variable, and estimate a predicted change score by calculating the difference between the prediction at \( t = 1 \) and the prediction at \( t = 0 \).
+   
+2) Simulate data with several parameters of interest for our DGPs---rate of change, strength of change, direction of change, and reliability of response measurement---using
+
+   $$
+   y_{it} = Y_i + \delta \tau_i D_{it} + \epsilon_{it} \ \text{ with } \epsilon_{it} \sim \mathcal{N}(0, 1)
+   $$
+
+   where we have a random variable $Y_{i}$ for true scores, with varying realizations $y_{it}$, representing a person $i$'s beliefs at time $t$; an indicator for change, $D_{it}$, operationalized as a non-reversible trigger if there is a respondent-level change in true scores; an effect size, $\delta$, and a respondent level direction multiplier $\tau_i$ that indexes whether the change is positive or negative.
+
+3) Compute the distance between the summary of the observed data and the simulated one. We use the Kolgomorov-Smirnov statistic to measure the degree of overlap between the real and simulated distributions of change scores. 
+
+4) Replicate steps 2 to 4 $N$ times, each one drawing new samples from a proposal distribution for each parameter.
+
+5) Take the samples that resulted in the smallest distance as plausible DGPs for our observed data. Smaller distances represent a closer resemblance of the simulated to the observed data, indicating that the proposed DGP could have generated our real-world data. 
+
+Let's apply this to our simulated dataset.
+
+```{r}
+grid <- gridSearch(
+  data = d,
+  yname = 'y', ## observed binary outcome
+  tname = 't', ## time variable
+  pname = 'p', ## panel identifier
+  n_samples = 1e5 ## the number of draws from the priors
+)
+
+head(grid)
+```
+
+The `gridSearch` function gives us a data table with five columns:
+
+- `ic_sample` shows the value of the `strength` parameter informing our DGP,
+- `pc_sample` shows the value of the `rate` parameter informing our DGP,
+- `balance` shows the extent to which our sample makes positive changes; put differently, it shows the `direction` of change in the sample,
+- `rel_sample` provides a value of the reliability score retrieved from the search.
+- `error` provides the KS distance between observed and simulated trajectories.
+
+## Evaluating the Potential DGPs
+
+We can visually inspect the best parameter distributions using `gridPlot`:
+
+```{r}
+gridPlot(grid, plot = "posterior", cutoff = 0.05)
+```
+
+Alternatively, we can look at the conditional accepted samples:
+
+```{r}
+gridPlot(grid, plot = "conditional", cutoff = 0.05)
+```
+
+# Warnings and Notes
+
+We would like to flag a few issues that you need to be aware of:
+
+- Currently, `gridsearch` only accommodates binary outcomes. We are hoping to generalize these procedures to cases where we have more than 2 response categories.
+- `gridSearch` requires a balanced panel dataset, with no missing values.
+
+For more details about the protocol, please see the article, *The Promises and Pitfalls of Using Panel Data to Understand Individual Belief Change*, stored in [SocArXiv](https://osf.io/preprints/socarxiv/rhf4q).
